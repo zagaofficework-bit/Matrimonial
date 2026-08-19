@@ -1,0 +1,368 @@
+.mv-page {
+  padding-bottom: 40px;
+}
+
+.mv-cta {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+/* ---- Back link ---- */
+.mv-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: var(--color-muted);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 0;
+  margin: 20px 0 14px;
+}
+
+.mv-back-link:hover {
+  color: var(--color-primary);
+}
+
+.mv-back-link svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* ---- Cover banner ---- */
+.mv-cover {
+  position: relative;
+  height: 190px;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(120deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+  overflow: hidden;
+}
+
+.mv-cover::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 15% 30%, rgba(255, 255, 255, 0.16) 0, transparent 40%),
+    radial-gradient(circle at 85% 70%, rgba(255, 255, 255, 0.12) 0, transparent 45%);
+}
+
+.mv-share {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--color-primary-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
+.mv-share svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* ---- Header card (overlaps the cover) ---- */
+.mv-header-card {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: 24px;
+  margin: -100px 20px 0;
+  padding: 0 4px 20px;
+  flex-wrap: wrap;
+}
+
+.mv-avatar {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  flex-shrink: 0;
+  border-radius: var(--radius-lg);
+  border: 5px solid var(--color-surface);
+  background: var(--color-primary-light);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+
+.mv-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.mv-avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 72px;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.mv-verified {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  width: 28px;
+  height: 28px;
+  color: var(--color-primary);
+  background: var(--color-surface);
+  border-radius: 50%;
+  padding: 2px;
+  box-shadow: var(--shadow-sm);
+}
+
+.mv-header-info {
+  flex: 1;
+  min-width: 180px;
+  padding-bottom: 10px;
+}
+
+.mv-header-info h1 {
+  font-size: 24px;
+  color: var(--color-text-strong);
+  margin: 0 0 6px;
+}
+
+.mv-header-info h1 span {
+  font-weight: 500;
+  color: var(--color-muted);
+}
+
+.mv-location,
+.mv-occupation {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-muted);
+  font-size: 13.5px;
+  margin: 4px 0 0;
+}
+
+.mv-location svg,
+.mv-occupation svg {
+  width: 15px;
+  height: 15px;
+  color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+.mv-header-actions {
+  display: flex;
+  gap: 10px;
+  padding-bottom: 10px;
+}
+
+.mv-header-actions .btn {
+  padding: 9px 16px;
+  font-size: 13px;
+}
+
+/* ---- Photo strip ---- */
+.mv-photo-strip {
+  display: flex;
+  gap: 8px;
+  margin: 0 20px 4px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.mv-photo-thumb {
+  flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+  padding: 0;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 2px solid transparent;
+  background: none;
+}
+
+.mv-photo-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.mv-photo-thumb.active {
+  border-color: var(--color-primary);
+}
+
+/* ---- Body ---- */
+.mv-body {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-top: 22px;
+}
+
+.mv-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 18px 20px;
+}
+
+.mv-card h3 {
+  font-size: 13.5px;
+  color: var(--color-primary-dark);
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.mv-bio {
+  font-size: 13.5px;
+  color: var(--color-text);
+  margin: 0;
+  line-height: 1.6;
+}
+
+.mv-cards-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.mv-detail-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 13px;
+  padding: 6px 0;
+  border-bottom: 1px dashed var(--color-border);
+}
+
+.mv-detail-row:last-child {
+  border-bottom: none;
+}
+
+.mv-detail-label {
+  color: var(--color-muted);
+}
+
+.mv-detail-value {
+  color: var(--color-text);
+  font-weight: 600;
+  text-align: right;
+  text-transform: capitalize;
+}
+
+.mv-detail-two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 20px;
+}
+
+.mv-mini-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-muted);
+}
+
+.mv-mini-value {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 2px 0 0;
+}
+
+/* ---- Lifestyle ---- */
+.mv-lifestyle-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.mv-lifestyle-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--color-primary-light);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--color-primary-dark);
+}
+
+.mv-lifestyle-icon {
+  width: 20px;
+  height: 20px;
+  color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+.mv-lifestyle-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* ---- Interests ---- */
+.mv-interest-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.mv-interest-tag {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--color-primary-light);
+  color: var(--color-primary-dark);
+}
+
+@media (max-width: 700px) {
+  .mv-cover {
+    height: 130px;
+  }
+
+  .mv-header-card {
+    margin-top: -60px;
+    gap: 14px;
+  }
+
+  .mv-avatar {
+    width: 120px;
+    height: 120px;
+  }
+
+  .mv-avatar-placeholder {
+    font-size: 46px;
+  }
+
+  .mv-header-actions {
+    width: 100%;
+    padding-bottom: 0;
+  }
+
+  .mv-header-actions .btn {
+    flex: 1;
+  }
+
+  .mv-cards-grid,
+  .mv-lifestyle-grid,
+  .mv-detail-two-col {
+    grid-template-columns: 1fr;
+  }
+
+  .mv-lifestyle-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

@@ -1,0 +1,147 @@
+.profile-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.profile-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--color-primary-light);
+}
+
+.profile-card-image {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  background: var(--color-primary-light);
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.profile-card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.3s ease;
+}
+
+.profile-card:hover .profile-card-image img {
+  transform: scale(1.04);
+}
+
+.profile-card-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
+  font-weight: 700;
+  color: var(--color-primary);
+  background: var(--color-primary-light);
+}
+
+.profile-card-overlay {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 34px 14px 12px;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(42, 10, 22, 0.82) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.profile-card-name {
+  font-size: 16px;
+  color: #fff;
+  margin: 0;
+  font-family: var(--font-display);
+}
+
+.profile-card-verified {
+  width: 18px;
+  height: 18px;
+  color: #22c55e;
+  flex-shrink: 0;
+}
+
+.profile-card-body {
+  padding: 12px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.profile-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--color-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-card-meta svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  color: var(--color-primary);
+}
+
+.profile-card-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.btn-sm {
+  padding: 8px 14px;
+  font-size: 12.5px;
+  flex: 1;
+}
+
+.profile-card-save {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.profile-card-save:hover {
+  background: var(--color-primary-light);
+  border-color: var(--color-primary-light);
+}
+
+.profile-card-save svg {
+  width: 16px;
+  height: 16px;
+}
+
+.profile-card-matched-pill {
+  width: 100%;
+  background: var(--color-success);
+  border-color: var(--color-success);
+}
+
+.profile-card-matched-pill:hover {
+  background: var(--color-success);
+  opacity: 0.9;
+}

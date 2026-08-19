@@ -1,0 +1,381 @@
+.pub-page {
+  padding-top: 20px;
+}
+
+/* ---- Back link ---- */
+.pub-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: var(--color-muted);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 0;
+  margin-bottom: 16px;
+}
+
+.pub-back-link:hover {
+  color: var(--color-primary);
+}
+
+.pub-back-link svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* ---- Layout: photo left, info right ---- */
+.pub-layout {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 28px;
+  align-items: start;
+}
+
+/* ---- Left: photo column ---- */
+.pub-photo-col {
+  position: sticky;
+  top: calc(var(--header-height) + 20px);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pub-photo-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+}
+
+.pub-photo-main {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  background: var(--color-primary-light);
+}
+
+.pub-photo-main img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.pub-photo-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 72px;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.pub-share {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--color-primary-dark);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pub-share svg {
+  width: 16px;
+  height: 16px;
+}
+
+.pub-dots {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+}
+
+.pub-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.55);
+  padding: 0;
+}
+
+.pub-dot.active {
+  background: #fff;
+  width: 20px;
+  border-radius: 4px;
+}
+
+.pub-thumbs {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  padding: 8px;
+}
+
+.pub-thumb {
+  padding: 0;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 2px solid transparent;
+  aspect-ratio: 1 / 1;
+  background: none;
+}
+
+.pub-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.pub-thumb.active {
+  border-color: var(--color-primary);
+}
+
+/* ---- Small action buttons under photo ---- */
+.pub-edit-btn {
+  width: 100%;
+  padding: 8px 14px;
+  font-size: 13px;
+}
+
+.pub-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pub-actions .btn {
+  flex: 1;
+  min-width: 90px;
+  padding: 8px 12px;
+  font-size: 13px;
+}
+
+.pub-respond-actions {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.pub-connect-matched {
+  background: var(--color-success) !important;
+  border-color: var(--color-success) !important;
+  opacity: 1 !important;
+}
+
+/* ---- Right: main info column ---- */
+.pub-main {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+}
+
+.pub-header h1 {
+  font-size: 26px;
+  color: var(--color-text-strong);
+  margin-bottom: 4px;
+}
+
+.pub-header h1 span {
+  font-weight: 500;
+  color: var(--color-muted);
+}
+
+.pub-profile-type-badge {
+  display: inline-block;
+  vertical-align: middle;
+  margin-left: 10px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--color-primary-light);
+  color: var(--color-primary-dark);
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--font-sans);
+}
+
+.pub-location {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-muted);
+  font-size: 13.5px;
+  margin: 0;
+}
+
+.pub-location svg {
+  width: 15px;
+  height: 15px;
+  color: var(--color-primary);
+}
+
+/* ---- Info cards ---- */
+.pubd-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 18px 20px;
+}
+
+.pubd-card h3 {
+  font-size: 13.5px;
+  color: var(--color-primary-dark);
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.pubd-cards-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.pubd-bio {
+  font-size: 13.5px;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.pubd-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 13px;
+  padding: 6px 0;
+  border-bottom: 1px dashed var(--color-border);
+}
+
+.pubd-row:last-child {
+  border-bottom: none;
+}
+
+.pubd-label {
+  color: var(--color-muted);
+}
+
+.pubd-value {
+  color: var(--color-text);
+  font-weight: 600;
+  text-align: right;
+  text-transform: capitalize;
+}
+
+.pubd-two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 20px;
+}
+
+.pubd-mini-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-muted);
+}
+
+.pubd-mini-value {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 2px 0 0;
+}
+
+/* ---- Lifestyle ---- */
+.pub-lifestyle-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.pub-lifestyle-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--color-primary-light);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--color-primary-dark);
+}
+
+.pub-lifestyle-icon {
+  width: 20px;
+  height: 20px;
+  color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+.pub-lifestyle-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* ---- Interests ---- */
+.pub-interest-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pub-interest-tag {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--color-primary-light);
+  color: var(--color-primary-dark);
+}
+
+.pub-cta {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+@media (max-width: 860px) {
+  .pub-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .pub-photo-col {
+    position: static;
+    max-width: 320px;
+  }
+
+  .pubd-cards-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pub-lifestyle-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .pub-photo-col {
+    max-width: none;
+  }
+
+  .pubd-two-col,
+  .pub-lifestyle-grid {
+    grid-template-columns: 1fr;
+  }
+}
