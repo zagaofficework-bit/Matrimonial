@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  deleteAllNotifications,
+  deleteNotification,
   getMyNotifications,
   getUnreadNotificationCount,
   markAllNotificationsAsRead,
@@ -57,5 +59,28 @@ export function useNotifications() {
     setUnreadCount(0);
   }, []);
 
-  return { notifications, unreadCount, refresh, markRead, markAllRead };
+  const removeNotification = useCallback(async (notificationId) => {
+    const target = notifications.find((n) => n._id === notificationId);
+    await deleteNotification(notificationId);
+    setNotifications((prev) => prev.filter((n) => n._id !== notificationId));
+    if (target && !target.isRead) {
+      setUnreadCount((prev) => Math.max(0, prev - 1));
+    }
+  }, [notifications]);
+
+  const removeAllNotifications = useCallback(async () => {
+    await deleteAllNotifications();
+    setNotifications([]);
+    setUnreadCount(0);
+  }, []);
+
+  return {
+    notifications,
+    unreadCount,
+    refresh,
+    markRead,
+    markAllRead,
+    removeNotification,
+    removeAllNotifications
+  };
 }

@@ -1,6 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import ProfileCard from '../../components/ProfileCard/ProfileCard';
+import FilterTab from '../../components/Filtertabs/FilterTab';
 import { searchProfiles } from '../../api/search.api';
+import { getSavedProfileIds } from '../../api/savedProfile.api';
+import { STATE_OPTIONS } from '../../utils/StateOptions';
+import { EDUCATION_OPTIONS } from '../../utils/EducationOptions';
+import { OCCUPATION_OPTIONS } from '../../utils/OccupationOptions';
+import { CASTE_OPTIONS } from '../../utils/CasteOptions';
 import './Search.css';
 
 const EMPTY_FILTERS = {
@@ -11,15 +17,18 @@ const EMPTY_FILTERS = {
   heightMax: '',
   incomeMin: '',
   incomeMax: '',
-  religion: '',
-  caste: '',
-  education: '',
-  occupation: '',
-  maritalStatus: '',
+  religion: [],
+  caste: [],
+  education: [],
+  occupation: [],
+  maritalStatus: [],
+  state: [],
   gender: ''
 };
 
-const RELIGION_OPTIONS = ['Hindu', 'Muslim', 'Christian', 'Sikh', 'Jain', 'Buddhist', 'Parsi', 'Jewish', 'Other'];
+const RELIGION_OPTIONS = ['Hindu', 'Muslim', 'Christian', 'Sikh', 'Jain', 'Buddhist', 'Parsi', 'Jewish', 'Other'].map(
+  (opt) => ({ value: opt, label: opt })
+);
 
 const MARITAL_OPTIONS = [
   { value: 'never_married', label: 'Never Married' },
@@ -44,39 +53,71 @@ function SearchIcon() {
   );
 }
 
-function ChevronIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14">
-      <path d="M6 9l6 6 6-6" />
-    </svg>
-  );
-}
-
 function CloseIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="13" height="13">
       <path d="M18 6L6 18M6 6l12 12" />
     </svg>
   );
 }
 
+// Multi-select filters backend ko comma-separated string ke roop mein jaate hain
+// (e.g. "Hindu,Sikh") - backend ko in fields par comma list -> $in query handle
+// karni chahiye.
+function serializeFilters(f) {
+  return {
+    ...f,
+    religion: f.religion.join(','),
+    caste: f.caste.join(','),
+    education: f.education.join(','),
+    occupation: f.occupation.join(','),
+    maritalStatus: f.maritalStatus.join(','),
+    state: f.state.join(',')
+  };
+}
+
+function rangeChipLabel(title, min, max) {
+  if (min && max) return `${title}: ${min}-${max}`;
+  if (min) return `${title}: ${min}+`;
+  if (max) return `${title}: up to ${max}`;
+  return '';
+}
+
+// Multi-select ke liye pill label: 1-2 selected ho to naam dikhao, usse zyada
+// ho to sirf count.
+function multiChipLabel(values, options) {
+  if (!values || values.length === 0) return '';
+  const labels = values.map((v) => options.find((o) => o.value === v)?.label || v);
+  return labels.length <= 2 ? labels.join(', ') : `${labels.length} selected`;
+}
+
 export default function Search() {
-  const [filters, setFilters] = useState(EMPTY_FILTERS);
+  // draft = jo popover abhi khula hai uske unsaved edits. appliedFilters = jo
+  // actually search me use ho raha hai. Tab open karte waqt draft ko applied
+  // se sync kar dete hain, Apply dabane par draft->applied commit hota hai.
+  const [draft, setDraft] = useState(EMPTY_FILTERS);
   const [appliedFilters, setAppliedFilters] = useState(EMPTY_FILTERS);
   const [page, setPage] = useState(1);
-  const [openChip, setOpenChip] = useState(null);
+  const [openTab, setOpenTab] = useState(null);
 
   const [results, setResults] = useState([]);
   const [pagination, setPagination] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [savedIds, setSavedIds] = useState([]);
 
-  const chipBarRef = useRef(null);
+  const filterBarRef = useRef(null);
+
+  useEffect(() => {
+    getSavedProfileIds()
+      .then(setSavedIds)
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     function handleOutsideClick(e) {
-      if (chipBarRef.current && !chipBarRef.current.contains(e.target)) {
-        setOpenChip(null);
+      if (filterBarRef.current && !filterBarRef.current.contains(e.target)) {
+        setOpenTab(null);
       }
     }
     document.addEventListener('mousedown', handleOutsideClick);
@@ -90,7 +131,7 @@ export default function Search() {
       setLoading(true);
       setError('');
       try {
-        const data = await searchProfiles({ ...appliedFilters, page, limit: 12 });
+        const data = await searchProfiles({ ...serializeFilters(appliedFilters), page, limit: 12 });
         if (isMounted) {
           setResults(data.results);
           setPagination(data.pagination);
@@ -108,57 +149,70 @@ export default function Search() {
     };
   }, [appliedFilters, page]);
 
-  function setField(name, value) {
-    setFilters((prev) => ({ ...prev, [name]: value }));
+  function toggleTab(key) {
+    if (openTab === key) {
+      setOpenTab(null);
+      return;
+    }
+    setDraft({ ...appliedFilters });
+    setOpenTab(key);
   }
 
-  function runFilters(next) {
+  function setDraftField(name, value) {
+    setDraft((prev) => ({ ...prev, [name]: value }));
+  }
+
+  function toggleDraftValue(name, value) {
+    setDraft((prev) => {
+      const current = prev[name];
+      const next = current.includes(value) ? current.filter((v) => v !== value) : [...current, value];
+      return { ...prev, [name]: next };
+    });
+  }
+
+  function applyFields(fields) {
+    setAppliedFilters((prev) => {
+      const next = { ...prev };
+      fields.forEach((f) => {
+        next[f] = draft[f];
+      });
+      return next;
+    });
     setPage(1);
-    setAppliedFilters(next);
+    setOpenTab(null);
+  }
+
+  function clearFields(fields) {
+    const cleared = {};
+    fields.forEach((f) => {
+      cleared[f] = Array.isArray(EMPTY_FILTERS[f]) ? [] : '';
+    });
+    setDraft((prev) => ({ ...prev, ...cleared }));
+    setAppliedFilters((prev) => ({ ...prev, ...cleared }));
+    setPage(1);
+    setOpenTab(null);
+  }
+
+  function selectGender(value) {
+    setDraftField('gender', value);
+    setAppliedFilters((prev) => ({ ...prev, gender: value }));
+    setPage(1);
+    setOpenTab(null);
   }
 
   function handleCitySubmit(e) {
     e.preventDefault();
-    runFilters(filters);
-  }
-
-  function applyChip() {
-    runFilters(filters);
-    setOpenChip(null);
-  }
-
-  function clearChip(fields) {
-    const next = { ...filters };
-    fields.forEach((f) => {
-      next[f] = '';
-    });
-    setFilters(next);
-    runFilters(next);
+    applyFields(['city']);
   }
 
   function handleResetAll() {
-    setFilters(EMPTY_FILTERS);
-    setPage(1);
+    setDraft(EMPTY_FILTERS);
     setAppliedFilters(EMPTY_FILTERS);
-    setOpenChip(null);
+    setPage(1);
+    setOpenTab(null);
   }
 
-  function toggleChip(key) {
-    setOpenChip((prev) => (prev === key ? null : key));
-  }
-
-  const hasAnyFilter = Object.values(appliedFilters).some((v) => v !== '');
-
-  function rangeChipLabel(title, min, max) {
-    if (min && max) return `${title}: ${min}-${max}`;
-    if (min) return `${title}: ${min}+`;
-    if (max) return `${title}: up to ${max}`;
-    return title;
-  }
-
-  function valueChipLabel(title, value, optionLabel) {
-    return value ? optionLabel || value : title;
-  }
+  const hasAnyFilter = Object.values(appliedFilters).some((v) => (Array.isArray(v) ? v.length > 0 : v !== ''));
 
   return (
     <div className="page-container">
@@ -175,18 +229,15 @@ export default function Search() {
           type="text"
           name="city"
           placeholder="Search profiles by city..."
-          value={filters.city}
-          onChange={(e) => setField('city', e.target.value)}
+          value={draft === appliedFilters ? appliedFilters.city : draft.city}
+          onChange={(e) => setDraftField('city', e.target.value)}
         />
-        {filters.city && (
+        {draft.city && (
           <button
             type="button"
             className="search-bar-clear"
             aria-label="Clear city search"
-            onClick={() => {
-              setField('city', '');
-              runFilters({ ...filters, city: '' });
-            }}
+            onClick={() => clearFields(['city'])}
           >
             <CloseIcon />
           </button>
@@ -196,350 +247,318 @@ export default function Search() {
         </button>
       </form>
 
-      <div className="filter-chip-bar" ref={chipBarRef}>
-        {/* Age */}
-        <div className="filter-chip-wrap">
-          <button
-            type="button"
-            className={`filter-chip ${filters.ageMin || filters.ageMax ? 'filter-chip-active' : ''}`}
-            onClick={() => toggleChip('age')}
+      <div className="filter-bar" ref={filterBarRef}>
+        <div className="filter-bar-tabs">
+          <FilterTab
+            label="Age"
+            activeLabel={rangeChipLabel('Age', appliedFilters.ageMin, appliedFilters.ageMax)}
+            isOpen={openTab === 'age'}
+            onToggle={() => toggleTab('age')}
+            onClear={() => clearFields(['ageMin', 'ageMax'])}
           >
-            {rangeChipLabel('Age', filters.ageMin, filters.ageMax)}
-            <ChevronIcon />
-          </button>
-          {openChip === 'age' && (
-            <div className="filter-popover">
-              <div className="filter-popover-row">
-                <input
-                  type="number"
-                  min="18"
-                  max="100"
-                  placeholder="Min"
-                  value={filters.ageMin}
-                  onChange={(e) => setField('ageMin', e.target.value)}
-                />
-                <span>to</span>
-                <input
-                  type="number"
-                  min="18"
-                  max="100"
-                  placeholder="Max"
-                  value={filters.ageMax}
-                  onChange={(e) => setField('ageMax', e.target.value)}
-                />
-              </div>
-              <div className="filter-popover-actions">
-                <button type="button" className="link-btn" onClick={() => clearChip(['ageMin', 'ageMax'])}>
-                  Clear
-                </button>
-                <button type="button" className="btn btn-primary btn-sm" onClick={applyChip}>
-                  Apply
-                </button>
-              </div>
+            <div className="ftab-range-row">
+              <input
+                type="number"
+                min="18"
+                max="100"
+                placeholder="Min"
+                value={draft.ageMin}
+                onChange={(e) => setDraftField('ageMin', e.target.value)}
+              />
+              <span>to</span>
+              <input
+                type="number"
+                min="18"
+                max="100"
+                placeholder="Max"
+                value={draft.ageMax}
+                onChange={(e) => setDraftField('ageMax', e.target.value)}
+              />
             </div>
-          )}
-        </div>
-
-        {/* Height */}
-        <div className="filter-chip-wrap">
-          <button
-            type="button"
-            className={`filter-chip ${filters.heightMin || filters.heightMax ? 'filter-chip-active' : ''}`}
-            onClick={() => toggleChip('height')}
-          >
-            {rangeChipLabel('Height', filters.heightMin, filters.heightMax)}
-            <ChevronIcon />
-          </button>
-          {openChip === 'height' && (
-            <div className="filter-popover">
-              <div className="filter-popover-row">
-                <input
-                  type="number"
-                  min="100"
-                  max="250"
-                  placeholder="Min cm"
-                  value={filters.heightMin}
-                  onChange={(e) => setField('heightMin', e.target.value)}
-                />
-                <span>to</span>
-                <input
-                  type="number"
-                  min="100"
-                  max="250"
-                  placeholder="Max cm"
-                  value={filters.heightMax}
-                  onChange={(e) => setField('heightMax', e.target.value)}
-                />
-              </div>
-              <div className="filter-popover-actions">
-                <button type="button" className="link-btn" onClick={() => clearChip(['heightMin', 'heightMax'])}>
-                  Clear
-                </button>
-                <button type="button" className="btn btn-primary btn-sm" onClick={applyChip}>
-                  Apply
-                </button>
-              </div>
+            <div className="ftab-popover-actions">
+              <button type="button" className="link-btn" onClick={() => clearFields(['ageMin', 'ageMax'])}>
+                Clear
+              </button>
+              <button type="button" className="btn btn-primary btn-sm" onClick={() => applyFields(['ageMin', 'ageMax'])}>
+                Apply
+              </button>
             </div>
-          )}
-        </div>
+          </FilterTab>
 
-        {/* Income */}
-        <div className="filter-chip-wrap">
-          <button
-            type="button"
-            className={`filter-chip ${filters.incomeMin || filters.incomeMax ? 'filter-chip-active' : ''}`}
-            onClick={() => toggleChip('income')}
+          <FilterTab
+            label="Height"
+            activeLabel={rangeChipLabel('Height', appliedFilters.heightMin, appliedFilters.heightMax)}
+            isOpen={openTab === 'height'}
+            onToggle={() => toggleTab('height')}
+            onClear={() => clearFields(['heightMin', 'heightMax'])}
           >
-            {rangeChipLabel('Salary', filters.incomeMin, filters.incomeMax)}
-            <ChevronIcon />
-          </button>
-          {openChip === 'income' && (
-            <div className="filter-popover">
-              <div className="filter-popover-row">
-                <input
-                  type="number"
-                  min="0"
-                  placeholder="Min"
-                  value={filters.incomeMin}
-                  onChange={(e) => setField('incomeMin', e.target.value)}
-                />
-                <span>to</span>
-                <input
-                  type="number"
-                  min="0"
-                  placeholder="Max"
-                  value={filters.incomeMax}
-                  onChange={(e) => setField('incomeMax', e.target.value)}
-                />
-              </div>
-              <div className="filter-popover-actions">
-                <button type="button" className="link-btn" onClick={() => clearChip(['incomeMin', 'incomeMax'])}>
-                  Clear
-                </button>
-                <button type="button" className="btn btn-primary btn-sm" onClick={applyChip}>
-                  Apply
-                </button>
-              </div>
+            <div className="ftab-range-row">
+              <input
+                type="number"
+                min="100"
+                max="250"
+                placeholder="Min (cm)"
+                value={draft.heightMin}
+                onChange={(e) => setDraftField('heightMin', e.target.value)}
+              />
+              <span>to</span>
+              <input
+                type="number"
+                min="100"
+                max="250"
+                placeholder="Max (cm)"
+                value={draft.heightMax}
+                onChange={(e) => setDraftField('heightMax', e.target.value)}
+              />
             </div>
-          )}
-        </div>
-
-        {/* Religion */}
-        <div className="filter-chip-wrap">
-          <button
-            type="button"
-            className={`filter-chip ${filters.religion ? 'filter-chip-active' : ''}`}
-            onClick={() => toggleChip('religion')}
-          >
-            {valueChipLabel('Religion', filters.religion)}
-            <ChevronIcon />
-          </button>
-          {openChip === 'religion' && (
-            <div className="filter-popover filter-popover-options">
+            <div className="ftab-popover-actions">
+              <button type="button" className="link-btn" onClick={() => clearFields(['heightMin', 'heightMax'])}>
+                Clear
+              </button>
               <button
                 type="button"
-                className={`filter-option ${!filters.religion ? 'filter-option-selected' : ''}`}
-                onClick={() => {
-                  const next = { ...filters, religion: '' };
-                  setFilters(next);
-                  runFilters(next);
-                  setOpenChip(null);
-                }}
+                className="btn btn-primary btn-sm"
+                onClick={() => applyFields(['heightMin', 'heightMax'])}
               >
-                Any
+                Apply
               </button>
+            </div>
+          </FilterTab>
+
+          <FilterTab
+            label="Salary"
+            activeLabel={rangeChipLabel('Salary', appliedFilters.incomeMin, appliedFilters.incomeMax)}
+            isOpen={openTab === 'income'}
+            onToggle={() => toggleTab('income')}
+            onClear={() => clearFields(['incomeMin', 'incomeMax'])}
+          >
+            <div className="ftab-range-row">
+              <input
+                type="number"
+                min="0"
+                placeholder="Min"
+                value={draft.incomeMin}
+                onChange={(e) => setDraftField('incomeMin', e.target.value)}
+              />
+              <span>to</span>
+              <input
+                type="number"
+                min="0"
+                placeholder="Max"
+                value={draft.incomeMax}
+                onChange={(e) => setDraftField('incomeMax', e.target.value)}
+              />
+            </div>
+            <div className="ftab-popover-actions">
+              <button type="button" className="link-btn" onClick={() => clearFields(['incomeMin', 'incomeMax'])}>
+                Clear
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary btn-sm"
+                onClick={() => applyFields(['incomeMin', 'incomeMax'])}
+              >
+                Apply
+              </button>
+            </div>
+          </FilterTab>
+
+          <FilterTab
+            label="Religion"
+            activeLabel={multiChipLabel(appliedFilters.religion, RELIGION_OPTIONS)}
+            isOpen={openTab === 'religion'}
+            onToggle={() => toggleTab('religion')}
+            onClear={() => clearFields(['religion'])}
+          >
+            <div className="ftab-checklist">
               {RELIGION_OPTIONS.map((opt) => (
-                <button
-                  key={opt}
-                  type="button"
-                  className={`filter-option ${filters.religion === opt ? 'filter-option-selected' : ''}`}
-                  onClick={() => {
-                    const next = { ...filters, religion: opt };
-                    setFilters(next);
-                    runFilters(next);
-                    setOpenChip(null);
-                  }}
-                >
-                  {opt}
-                </button>
+                <label key={opt.value} className="ftab-option">
+                  <input
+                    type="checkbox"
+                    checked={draft.religion.includes(opt.value)}
+                    onChange={() => toggleDraftValue('religion', opt.value)}
+                  />
+                  <span>{opt.label}</span>
+                </label>
               ))}
             </div>
-          )}
-        </div>
-
-        {/* Profession / Occupation */}
-        <div className="filter-chip-wrap">
-          <button
-            type="button"
-            className={`filter-chip ${filters.occupation ? 'filter-chip-active' : ''}`}
-            onClick={() => toggleChip('occupation')}
-          >
-            {valueChipLabel('Profession', filters.occupation)}
-            <ChevronIcon />
-          </button>
-          {openChip === 'occupation' && (
-            <div className="filter-popover">
-              <input
-                type="text"
-                placeholder="e.g. Engineer, Doctor..."
-                value={filters.occupation}
-                onChange={(e) => setField('occupation', e.target.value)}
-              />
-              <div className="filter-popover-actions">
-                <button type="button" className="link-btn" onClick={() => clearChip(['occupation'])}>
-                  Clear
-                </button>
-                <button type="button" className="btn btn-primary btn-sm" onClick={applyChip}>
-                  Apply
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Education */}
-        <div className="filter-chip-wrap">
-          <button
-            type="button"
-            className={`filter-chip ${filters.education ? 'filter-chip-active' : ''}`}
-            onClick={() => toggleChip('education')}
-          >
-            {valueChipLabel('Education', filters.education)}
-            <ChevronIcon />
-          </button>
-          {openChip === 'education' && (
-            <div className="filter-popover">
-              <input
-                type="text"
-                placeholder="e.g. B.Tech, MBA..."
-                value={filters.education}
-                onChange={(e) => setField('education', e.target.value)}
-              />
-              <div className="filter-popover-actions">
-                <button type="button" className="link-btn" onClick={() => clearChip(['education'])}>
-                  Clear
-                </button>
-                <button type="button" className="btn btn-primary btn-sm" onClick={applyChip}>
-                  Apply
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Caste */}
-        <div className="filter-chip-wrap">
-          <button
-            type="button"
-            className={`filter-chip ${filters.caste ? 'filter-chip-active' : ''}`}
-            onClick={() => toggleChip('caste')}
-          >
-            {valueChipLabel('Caste', filters.caste)}
-            <ChevronIcon />
-          </button>
-          {openChip === 'caste' && (
-            <div className="filter-popover">
-              <input
-                type="text"
-                placeholder="Enter caste"
-                value={filters.caste}
-                onChange={(e) => setField('caste', e.target.value)}
-              />
-              <div className="filter-popover-actions">
-                <button type="button" className="link-btn" onClick={() => clearChip(['caste'])}>
-                  Clear
-                </button>
-                <button type="button" className="btn btn-primary btn-sm" onClick={applyChip}>
-                  Apply
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Marital Status */}
-        <div className="filter-chip-wrap">
-          <button
-            type="button"
-            className={`filter-chip ${filters.maritalStatus ? 'filter-chip-active' : ''}`}
-            onClick={() => toggleChip('maritalStatus')}
-          >
-            {valueChipLabel(
-              'Marital Status',
-              filters.maritalStatus,
-              MARITAL_OPTIONS.find((o) => o.value === filters.maritalStatus)?.label
-            )}
-            <ChevronIcon />
-          </button>
-          {openChip === 'maritalStatus' && (
-            <div className="filter-popover filter-popover-options">
-              <button
-                type="button"
-                className={`filter-option ${!filters.maritalStatus ? 'filter-option-selected' : ''}`}
-                onClick={() => {
-                  const next = { ...filters, maritalStatus: '' };
-                  setFilters(next);
-                  runFilters(next);
-                  setOpenChip(null);
-                }}
-              >
-                Any
+            <div className="ftab-popover-actions">
+              <button type="button" className="link-btn" onClick={() => clearFields(['religion'])}>
+                Clear
               </button>
-              {MARITAL_OPTIONS.map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  className={`filter-option ${filters.maritalStatus === opt.value ? 'filter-option-selected' : ''}`}
-                  onClick={() => {
-                    const next = { ...filters, maritalStatus: opt.value };
-                    setFilters(next);
-                    runFilters(next);
-                    setOpenChip(null);
-                  }}
-                >
-                  {opt.label}
-                </button>
-              ))}
+              <button type="button" className="btn btn-primary btn-sm" onClick={() => applyFields(['religion'])}>
+                Apply
+              </button>
             </div>
-          )}
-        </div>
+          </FilterTab>
 
-        {/* Gender preference */}
-        <div className="filter-chip-wrap">
-          <button
-            type="button"
-            className={`filter-chip ${filters.gender ? 'filter-chip-active' : ''}`}
-            onClick={() => toggleChip('gender')}
+          <FilterTab
+            label="Profession"
+            activeLabel={multiChipLabel(appliedFilters.occupation, OCCUPATION_OPTIONS)}
+            isOpen={openTab === 'occupation'}
+            onToggle={() => toggleTab('occupation')}
+            onClear={() => clearFields(['occupation'])}
           >
-            {valueChipLabel(
-              'Show Me',
-              filters.gender,
-              GENDER_OPTIONS.find((o) => o.value === filters.gender)?.label
-            )}
-            <ChevronIcon />
-          </button>
-          {openChip === 'gender' && (
-            <div className="filter-popover filter-popover-options">
-              {GENDER_OPTIONS.map((opt) => (
-                <button
-                  key={opt.value || 'default'}
-                  type="button"
-                  className={`filter-option ${filters.gender === opt.value ? 'filter-option-selected' : ''}`}
-                  onClick={() => {
-                    const next = { ...filters, gender: opt.value };
-                    setFilters(next);
-                    runFilters(next);
-                    setOpenChip(null);
-                  }}
-                >
-                  {opt.label}
-                </button>
+            <div className="ftab-checklist">
+              {OCCUPATION_OPTIONS.map((opt) => (
+                <label key={opt.value} className="ftab-option">
+                  <input
+                    type="checkbox"
+                    checked={draft.occupation.includes(opt.value)}
+                    onChange={() => toggleDraftValue('occupation', opt.value)}
+                  />
+                  <span>{opt.label}</span>
+                </label>
               ))}
-              <p className="filter-popover-hint">
-                By default hum tumhe opposite gender ki profiles dikhate hain. Yahan se badal sakte ho.
-              </p>
             </div>
-          )}
+            <div className="ftab-popover-actions">
+              <button type="button" className="link-btn" onClick={() => clearFields(['occupation'])}>
+                Clear
+              </button>
+              <button type="button" className="btn btn-primary btn-sm" onClick={() => applyFields(['occupation'])}>
+                Apply
+              </button>
+            </div>
+          </FilterTab>
+
+          <FilterTab
+            label="Education"
+            activeLabel={multiChipLabel(appliedFilters.education, EDUCATION_OPTIONS)}
+            isOpen={openTab === 'education'}
+            onToggle={() => toggleTab('education')}
+            onClear={() => clearFields(['education'])}
+          >
+            <div className="ftab-checklist">
+              {EDUCATION_OPTIONS.map((opt) => (
+                <label key={opt.value} className="ftab-option">
+                  <input
+                    type="checkbox"
+                    checked={draft.education.includes(opt.value)}
+                    onChange={() => toggleDraftValue('education', opt.value)}
+                  />
+                  <span>{opt.label}</span>
+                </label>
+              ))}
+            </div>
+            <div className="ftab-popover-actions">
+              <button type="button" className="link-btn" onClick={() => clearFields(['education'])}>
+                Clear
+              </button>
+              <button type="button" className="btn btn-primary btn-sm" onClick={() => applyFields(['education'])}>
+                Apply
+              </button>
+            </div>
+          </FilterTab>
+
+          <FilterTab
+            label="Caste"
+            activeLabel={multiChipLabel(appliedFilters.caste, CASTE_OPTIONS)}
+            isOpen={openTab === 'caste'}
+            onToggle={() => toggleTab('caste')}
+            onClear={() => clearFields(['caste'])}
+          >
+            <div className="ftab-checklist">
+              {CASTE_OPTIONS.map((opt) => (
+                <label key={opt.value} className="ftab-option">
+                  <input
+                    type="checkbox"
+                    checked={draft.caste.includes(opt.value)}
+                    onChange={() => toggleDraftValue('caste', opt.value)}
+                  />
+                  <span>{opt.label}</span>
+                </label>
+              ))}
+            </div>
+            <div className="ftab-popover-actions">
+              <button type="button" className="link-btn" onClick={() => clearFields(['caste'])}>
+                Clear
+              </button>
+              <button type="button" className="btn btn-primary btn-sm" onClick={() => applyFields(['caste'])}>
+                Apply
+              </button>
+            </div>
+          </FilterTab>
+
+          <FilterTab
+            label="State"
+            activeLabel={multiChipLabel(appliedFilters.state, STATE_OPTIONS)}
+            isOpen={openTab === 'state'}
+            onToggle={() => toggleTab('state')}
+            onClear={() => clearFields(['state'])}
+          >
+            <div className="ftab-checklist">
+              {STATE_OPTIONS.map((opt) => (
+                <label key={opt.value} className="ftab-option">
+                  <input
+                    type="checkbox"
+                    checked={draft.state.includes(opt.value)}
+                    onChange={() => toggleDraftValue('state', opt.value)}
+                  />
+                  <span>{opt.label}</span>
+                </label>
+              ))}
+            </div>
+            <div className="ftab-popover-actions">
+              <button type="button" className="link-btn" onClick={() => clearFields(['state'])}>
+                Clear
+              </button>
+              <button type="button" className="btn btn-primary btn-sm" onClick={() => applyFields(['state'])}>
+                Apply
+              </button>
+            </div>
+          </FilterTab>
+
+          <FilterTab
+            label="Marital Status"
+            activeLabel={multiChipLabel(appliedFilters.maritalStatus, MARITAL_OPTIONS)}
+            isOpen={openTab === 'maritalStatus'}
+            onToggle={() => toggleTab('maritalStatus')}
+            onClear={() => clearFields(['maritalStatus'])}
+          >
+            <div className="ftab-checklist">
+              {MARITAL_OPTIONS.map((opt) => (
+                <label key={opt.value} className="ftab-option">
+                  <input
+                    type="checkbox"
+                    checked={draft.maritalStatus.includes(opt.value)}
+                    onChange={() => toggleDraftValue('maritalStatus', opt.value)}
+                  />
+                  <span>{opt.label}</span>
+                </label>
+              ))}
+            </div>
+            <div className="ftab-popover-actions">
+              <button type="button" className="link-btn" onClick={() => clearFields(['maritalStatus'])}>
+                Clear
+              </button>
+              <button type="button" className="btn btn-primary btn-sm" onClick={() => applyFields(['maritalStatus'])}>
+                Apply
+              </button>
+            </div>
+          </FilterTab>
+
+          <FilterTab
+            label="Show Me"
+            activeLabel={appliedFilters.gender ? GENDER_OPTIONS.find((o) => o.value === appliedFilters.gender)?.label : ''}
+            isOpen={openTab === 'gender'}
+            onToggle={() => toggleTab('gender')}
+            onClear={() => clearFields(['gender'])}
+          >
+            <div className="ftab-radio-list">
+              {GENDER_OPTIONS.map((opt) => (
+                <label key={opt.value || 'default'} className="ftab-option">
+                  <input
+                    type="radio"
+                    name="gender"
+                    checked={draft.gender === opt.value}
+                    onChange={() => selectGender(opt.value)}
+                  />
+                  <span>{opt.label}</span>
+                </label>
+              ))}
+            </div>
+            <p className="ftab-hint">By default hum tumhe opposite gender ki profiles dikhate hain.</p>
+          </FilterTab>
         </div>
 
         {hasAnyFilter && (
@@ -560,7 +579,7 @@ export default function Search() {
         <>
           <div className="search-result-grid">
             {results.map((profile) => (
-              <ProfileCard key={profile._id} profile={profile} />
+              <ProfileCard key={profile._id} profile={profile} initiallySaved={savedIds.includes(profile._id)} />
             ))}
           </div>
 

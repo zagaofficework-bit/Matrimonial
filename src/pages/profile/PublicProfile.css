@@ -253,6 +253,10 @@
   margin: 0;
 }
 
+.pubd-view-story-btn {
+  width: 100%;
+}
+
 .pubd-row {
   display: flex;
   justify-content: space-between;
@@ -378,4 +382,23 @@
   .pub-lifestyle-grid {
     grid-template-columns: 1fr;
   }
+}
+/* Contact Details - premium gating (Membership feature) */
+.pubd-contact-locked {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  background: var(--color-primary-light);
+  border: 1px dashed rgba(159, 18, 57, 0.3);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+}
+
+.pubd-contact-locked p {
+  margin: 0;
+  color: var(--color-primary-dark);
+  font-size: 13px;
+  font-weight: 600;
 }

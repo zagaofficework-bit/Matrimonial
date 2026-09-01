@@ -76,6 +76,20 @@
   box-shadow: 0 0 0 3px rgba(159, 18, 57, 0.12);
 }
 
+.auth-card .field-group input[aria-invalid='true'],
+.auth-card .field-group select[aria-invalid='true'] {
+  border-color: var(--color-error);
+}
+
+.auth-card .field-group input[aria-invalid='true']:focus,
+.auth-card .field-group select[aria-invalid='true']:focus {
+  box-shadow: 0 0 0 3px var(--color-error-bg);
+}
+
+.auth-card .field-group .field-error {
+  margin-top: 2px;
+}
+
 .auth-card .btn-block {
   width: 100%;
   margin-top: 6px;
@@ -120,4 +134,33 @@
   .auth-screen {
     grid-template-columns: 1fr;
   }
+
+  .auth-form-side {
+    padding: 32px 16px 48px;
+  }
+
+  /* Side panel hides on mobile, so the form needs its own visible card */
+  .auth-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    padding: 26px 20px;
+  }
+}
+
+.field-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.forgot-password-link {
+  font-size: 12px;
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.forgot-password-link:hover {
+  color: var(--color-primary-dark);
 }

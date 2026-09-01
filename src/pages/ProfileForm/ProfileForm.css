@@ -174,3 +174,32 @@
   gap: 12px;
   padding-bottom: 20px;
 }
+
+@media (max-width: 640px) {
+  .profile-form-header h1 {
+    font-size: 22px;
+  }
+
+  .form-section {
+    padding: 18px 16px;
+  }
+
+  .photo-thumb,
+  .photo-upload-tile {
+    width: 92px;
+    height: 92px;
+  }
+
+  .profile-form-actions {
+    flex-direction: column-reverse;
+  }
+
+  .profile-form-actions .btn {
+    width: 100%;
+  }
+
+  .alert-success-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

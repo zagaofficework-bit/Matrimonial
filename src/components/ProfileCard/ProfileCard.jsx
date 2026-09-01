@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { sendInterest } from '../../api/interest.api';
+import { saveProfile, unsaveProfile } from '../../api/savedProfile.api';
 import './ProfileCard.css';
 
 function calculateAge(dob) {
@@ -19,10 +20,27 @@ const CONNECT_ERROR_LABELS = {
 // variant="matched" - Matches page par reuse hone ke liye: Connect/Save
 // buttons ki jagah ek "Matched" pill dikhata hai. Home/Search dono is prop
 // ke bina hi pehle jaisa call karte rehte hain, to unka behaviour same rehta hai.
-export default function ProfileCard({ profile, variant = 'default' }) {
+// matchPercentage - Home page se aata hai (partner preference ke against
+// calculate hua %, 0-100). null/undefined ho to badge simply nahi dikhta -
+// Search/Matches/SavedProfiles jaisi jagah is prop ke bina hi pehle jaisa
+// call karte rehte hain, unka behaviour same rehta hai.
+export default function ProfileCard({
+  profile,
+  variant = 'default',
+  initiallySaved = false,
+  onUnsave,
+  matchPercentage = null
+}) {
   const navigate = useNavigate();
   const [connectState, setConnectState] = useState('idle'); // idle | loading | sent | error
   const [connectLabel, setConnectLabel] = useState('Connect');
+  const [connectError, setConnectError] = useState('');
+  const [isSaved, setIsSaved] = useState(initiallySaved);
+  const [saveLoading, setSaveLoading] = useState(false);
+
+  useEffect(() => {
+    setIsSaved(initiallySaved);
+  }, [initiallySaved]);
 
   const primaryPhoto =
     profile.photos?.find((p) => p.isPrimary)?.url || profile.photos?.[0]?.url || null;
@@ -42,20 +60,60 @@ export default function ProfileCard({ profile, variant = 'default' }) {
     if (!receiverId) return;
 
     setConnectState('loading');
+    setConnectError('');
     try {
       await sendInterest(receiverId);
       setConnectLabel('Requested');
       setConnectState('sent');
     } catch (err) {
       const code = err.response?.data?.error?.code;
-      setConnectLabel(CONNECT_ERROR_LABELS[code] || 'Requested');
-      setConnectState('sent');
+      if (CONNECT_ERROR_LABELS[code]) {
+        // Already sent / already matched - the request effectively already
+        // went through earlier, so it's fine to show it as "sent".
+        setConnectLabel(CONNECT_ERROR_LABELS[code]);
+        setConnectState('sent');
+      } else {
+        // Unknown/real failure (network issue, server error, expired
+        // session, etc.) - don't lie to the user by pretending it sent.
+        // Reset to idle so they can see the error and retry.
+        setConnectState('idle');
+        setConnectLabel('Connect');
+        setConnectError(err.response?.data?.message || 'Could not send request. Please try again.');
+      }
+    }
+  }
+
+  async function handleToggleSave(e) {
+    e.stopPropagation();
+    if (saveLoading) return;
+
+    setSaveLoading(true);
+    try {
+      if (isSaved) {
+        await unsaveProfile(profile._id);
+        setIsSaved(false);
+        onUnsave?.(profile._id);
+      } else {
+        await saveProfile(profile._id);
+        setIsSaved(true);
+      }
+    } catch (err) {
+      // Save/unsave dono idempotent hain backend pe (already-saved ya
+      // not-saved dono ko gracefully handle karte hain), isliye yahan
+      // UI ko silently wapas sync kar dete hain agar kuch mismatch ho.
+      const code = err.response?.data?.error?.code;
+      if (code === 'NOT_SAVED') setIsSaved(false);
+    } finally {
+      setSaveLoading(false);
     }
   }
 
   return (
     <div className="profile-card">
       <div className="profile-card-image" onClick={goToProfile}>
+        {typeof matchPercentage === 'number' && (
+          <span className="profile-card-match-badge">{matchPercentage}% Match</span>
+        )}
         {primaryPhoto ? (
           <img src={primaryPhoto} alt={name} />
         ) : (
@@ -123,8 +181,15 @@ export default function ProfileCard({ profile, variant = 'default' }) {
                 </svg>
                 {connectState === 'loading' ? 'Sending...' : connectLabel}
               </button>
-              <button type="button" className="profile-card-save" aria-label="Save profile">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              {connectError && <span className="profile-card-connect-error">{connectError}</span>}
+              <button
+                type="button"
+                className={`profile-card-save ${isSaved ? 'is-saved' : ''}`}
+                aria-label={isSaved ? 'Unsave profile' : 'Save profile'}
+                onClick={handleToggleSave}
+                disabled={saveLoading}
+              >
+                <svg viewBox="0 0 24 24" fill={isSaved ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
                   <path d="M11.5 3l2.2 4.6 5 .7-3.6 3.6.9 5-4.5-2.4-4.5 2.4.9-5-3.6-3.6 5-.7z" />
                 </svg>
               </button>

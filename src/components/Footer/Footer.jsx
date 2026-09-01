@@ -8,37 +8,43 @@ export default function Footer() {
         <div className="footer-top">
           <div className="footer-brand">
             <span className="footer-logo">
-              Soul<span>Tie</span>
+              Vivah<span>Setu</span>
             </span>
             <p className="footer-tagline">
               Trusted matchmaking that brings two families together as one.
             </p>
           </div>
 
-          <div className="footer-col">
-            <h4>Explore</h4>
-            <Link to="/">Home</Link>
-            <a href="/#browse-profiles">Browse Profiles</a>
-            <Link to="/profile/create">Create Profile</Link>
-          </div>
+          <details className="footer-col">
+            <summary>Explore</summary>
+            <div className="footer-col-links">
+              <Link to="/">Home</Link>
+              <a href="/#browse-profiles">Browse Profiles</a>
+              <Link to="/profile/create">Create Profile</Link>
+            </div>
+          </details>
 
-          <div className="footer-col">
-            <h4>Company</h4>
-            <a href="#">About Us</a>
-            <a href="#">Success Stories</a>
-            <a href="#">Safety &amp; Privacy</a>
-          </div>
+          <details className="footer-col">
+            <summary>Company</summary>
+            <div className="footer-col-links">
+              <a href="#">About Us</a>
+              <a href="#">Success Stories</a>
+              <a href="#">Safety &amp; Privacy</a>
+            </div>
+          </details>
 
-          <div className="footer-col">
-            <h4>Support</h4>
-            <a href="#">Help Center</a>
-            <a href="#">Contact Us</a>
-            <a href="#">Terms &amp; Privacy</a>
-          </div>
+          <details className="footer-col">
+            <summary>Support</summary>
+            <div className="footer-col-links">
+              <a href="#">Help Center</a>
+              <a href="#">Contact Us</a>
+              <a href="#">Terms &amp; Privacy</a>
+            </div>
+          </details>
         </div>
 
         <div className="footer-bottom">
-          <p>© {new Date().getFullYear()} matrimony. All rights reserved.</p>
+          <p>© {new Date().getFullYear()}VivahSetu. All rights reserved.</p>
           <div className="footer-socials">
             <a href="#" aria-label="Instagram">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">

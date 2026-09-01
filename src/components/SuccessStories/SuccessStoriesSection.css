@@ -1,0 +1,140 @@
+.success-stories-section {
+  background: var(--color-surface);
+  padding: 40px 0;
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* Homepage ke baaki sections se thoda zyada wide - global .page-container
+   max-width ko yahin override kar rahe hain, kahin aur asar nahi padega */
+.success-stories-section .page-container {
+    width: calc(100% - 10rem); /* 8rem left + 2rem right */
+    max-width: 1360px;
+    margin-left: 8rem;
+    margin-right: 2rem;
+    box-sizing: border-box;
+}
+.success-stories-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: nowrap;      /* wrap होऊ देऊ नका */
+    gap: 12px;
+    margin-bottom: 24px;
+    width: 100%;
+    overflow: hidden;       /* page बाहेर जाणार नाही */
+}
+
+.success-stories-header > :first-child {
+    flex: 1;
+    min-width: 0;
+}
+
+.success-stories-header-actions {
+    flex: 0 0 auto;
+    margin-left: auto;
+}
+
+.success-stories-header h2 {
+  font-size: 26px;
+  margin-bottom: 2px;
+}
+
+.success-stories-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.success-stories-track {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.success-stories-track .story-card {
+  flex: 1 1 380px;
+  max-width: 420px;
+}
+
+.story-nav-btn {
+  flex: 0 0 auto;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-primary-dark);
+  font-size: 20px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-sm);
+}
+
+.story-nav-btn:hover {
+  background: var(--color-primary-light);
+  border-color: var(--color-primary);
+}
+
+@media (max-width: 860px) {
+  .success-stories-track .story-card {
+    flex: 1 1 100%;
+    max-width: 100%;
+  }
+}
+
+.success-stories-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.success-stories-empty {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+@media (max-width: 640px) {
+  /* Desktop-only wide margin (see note above) badly breaks mobile - reset it */
+  .success-stories-section .page-container {
+    width: 100%;
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .success-stories-header {
+    flex-wrap: wrap;
+    overflow: visible;
+  }
+
+  .success-stories-header-actions {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  .success-stories-row {
+    gap: 6px;
+  }
+
+  .success-stories-track {
+    flex-wrap: nowrap;
+  }
+
+  .success-stories-track .story-card {
+    display: none;
+  }
+
+  .success-stories-track .story-card:first-child {
+    display: flex;
+    flex: 1 1 100%;
+    max-width: 100%;
+  }
+}

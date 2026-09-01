@@ -47,6 +47,21 @@
   background: var(--color-primary-light);
 }
 
+.profile-card-match-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 1;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--color-success);
+  box-shadow: var(--shadow-sm);
+  letter-spacing: 0.2px;
+}
+
 .profile-card-overlay {
   position: absolute;
   left: 0;
@@ -130,6 +145,22 @@
   border-color: var(--color-primary-light);
 }
 
+.profile-card-save.is-saved {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+
+.profile-card-save.is-saved:hover {
+  background: var(--color-primary-dark);
+  border-color: var(--color-primary-dark);
+}
+
+.profile-card-save:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .profile-card-save svg {
   width: 16px;
   height: 16px;
@@ -144,4 +175,12 @@
 .profile-card-matched-pill:hover {
   background: var(--color-success);
   opacity: 0.9;
+}
+
+.profile-card-connect-error {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  font-size: 11.5px;
+  color: var(--color-error);
 }

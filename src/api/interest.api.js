@@ -1,14 +1,18 @@
 import axiosInstance from './axiosInstance';
 
 // ProfileCard / PublicProfile ka "Connect" button ye call karta hai.
+// Backend route: POST /interests/:userId  (receiverId URL param me jaata hai, body me nahi)
 export async function sendInterest(receiverId) {
-  const { data } = await axiosInstance.post('/interests', { receiverId });
+  const { data } = await axiosInstance.post(`/interests/${receiverId}`);
   return data.data.interest;
 }
 
-// Interests page (Received tab) ka Accept/Decline.
+// Interests page (Received tab) + PublicProfile ka Accept/Decline.
+// Backend me ek generic '/respond' route nahi hai - alag alag
+// '/accept' aur '/decline' routes hain (PUT), 'reject' nahi 'decline'.
 export async function respondToInterest(interestId, action) {
-  const { data } = await axiosInstance.patch(`/interests/${interestId}/respond`, { action });
+  const endpointAction = action === 'reject' ? 'decline' : action;
+  const { data } = await axiosInstance.put(`/interests/${interestId}/${endpointAction}`);
   return data.data.interest;
 }
 

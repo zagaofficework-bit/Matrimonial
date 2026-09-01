@@ -86,3 +86,24 @@
     grid-template-columns: 1fr;
   }
 }
+
+@media (max-width: 640px) {
+  .trust-grid {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    gap: 14px;
+    padding: 2px 2px 12px;
+    scrollbar-width: none;
+  }
+
+  .trust-grid::-webkit-scrollbar {
+    display: none;
+  }
+
+  .trust-card {
+    flex: 0 0 82%;
+    scroll-snap-align: center;
+  }
+}

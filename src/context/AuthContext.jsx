@@ -12,6 +12,24 @@ function readStoredUser() {
   }
 }
 
+// Multi-Admin RBAC helpers, used by the admin panel section of the app.
+// super_admin/admin: full access by default (matches how the app already
+// behaved before RBAC existed, so nothing breaks for existing accounts).
+// moderator: limited to whatever's in user.permissions.
+export function can(user, permission) {
+  if (!user) return false;
+  if (user.role === 'super_admin' || user.role === 'admin') return true;
+  return (user.permissions || []).includes(permission);
+}
+
+export function isSuperAdmin(user) {
+  return user?.role === 'super_admin';
+}
+
+export function isStaff(user) {
+  return ['moderator', 'admin', 'super_admin'].includes(user?.role);
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(readStoredUser());
 

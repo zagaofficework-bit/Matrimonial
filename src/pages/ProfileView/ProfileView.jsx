@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { getMyProfile } from '../../api/profile.api';
+import { getStoriesByUserId } from '../../api/successStory.api';
 import { useAuth } from '../../context/AuthContext';
 import './ProfileView.css';
 
@@ -83,6 +84,7 @@ export default function ProfileView() {
   const [activePhoto, setActivePhoto] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [myStoryEntries, setMyStoryEntries] = useState([]);
 
   useEffect(() => {
     let isMounted = true;
@@ -114,6 +116,24 @@ export default function ProfileView() {
       isMounted = false;
     };
   }, []);
+
+  // Success stories jinme ye member creator ya tagged partner hai - "About Me"
+  // ke upar ek chota card ke roop me dikhti hain.
+  useEffect(() => {
+    const myUserId = profile?.user?._id || user?._id;
+    if (!myUserId) return;
+
+    let isMounted = true;
+    getStoriesByUserId(myUserId)
+      .then((stories) => {
+        if (isMounted) setMyStoryEntries(stories);
+      })
+      .catch(() => {});
+
+    return () => {
+      isMounted = false;
+    };
+  }, [profile, user]);
 
   if (loading) return <p className="state-message">Loading profile...</p>;
 
@@ -211,6 +231,21 @@ export default function ProfileView() {
 
         {/* ---- Body ---- */}
         <div className="mv-body">
+          {myStoryEntries.length > 0 && (
+            <section className="mv-card mv-success-story-card">
+              <h3>Success Story</h3>
+              {myStoryEntries.map((story) => (
+                <Link to={`/success-stories/${story._id}`} className="mv-success-story-item" key={story._id}>
+                  <img src={story.image} alt={story.coupleNames} />
+                  <div>
+                    <span className="mv-success-story-names">{story.coupleNames}</span>
+                    <span className="mv-success-story-view">View story →</span>
+                  </div>
+                </Link>
+              ))}
+            </section>
+          )}
+
           {profile.bio && (
             <section className="mv-card mv-bio-card">
               <h3>About Me</h3>

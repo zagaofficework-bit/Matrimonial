@@ -16,9 +16,11 @@ function timeAgo(dateString) {
 
 // Navbar me bell icon - notifications ka dropdown dikhata hai (interest
 // aaya, match hua, interest reject hua). Har 20 second me poll hoke
-// khud-ba-khud refresh hoti hai.
+// khud-ba-khud refresh hoti hai. Har item par delete (X) button hai,
+// aur header me "Clear all" button hai jo saari notifications hata deta hai.
 export default function NotificationBell() {
-  const { notifications, unreadCount, markRead, markAllRead } = useNotifications();
+  const { notifications, unreadCount, markRead, markAllRead, removeNotification, removeAllNotifications } =
+    useNotifications();
   const [open, setOpen] = useState(false);
   const menuRef = useRef(null);
   const navigate = useNavigate();
@@ -45,6 +47,15 @@ export default function NotificationBell() {
     }
   }
 
+  function handleDeleteClick(e, notificationId) {
+    e.stopPropagation();
+    removeNotification(notificationId).catch(() => {});
+  }
+
+  function handleClearAll() {
+    removeAllNotifications().catch(() => {});
+  }
+
   return (
     <div className="notif-bell" ref={menuRef}>
       <button
@@ -66,11 +77,18 @@ export default function NotificationBell() {
         <div className="notif-dropdown">
           <div className="notif-dropdown-header">
             <span>Notifications</span>
-            {unreadCount > 0 && (
-              <button type="button" className="notif-mark-all" onClick={() => markAllRead().catch(() => {})}>
-                Mark all read
-              </button>
-            )}
+            <div className="notif-header-actions">
+              {unreadCount > 0 && (
+                <button type="button" className="notif-mark-all" onClick={() => markAllRead().catch(() => {})}>
+                  Mark all read
+                </button>
+              )}
+              {notifications.length > 0 && (
+                <button type="button" className="notif-clear-all" onClick={handleClearAll}>
+                  Clear all
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="notif-list">
@@ -78,15 +96,28 @@ export default function NotificationBell() {
               <p className="notif-empty">No notifications yet.</p>
             ) : (
               notifications.map((notification) => (
-                <button
-                  type="button"
+                <div
                   key={notification._id}
                   className={`notif-item ${notification.isRead ? '' : 'notif-item-unread'}`}
                   onClick={() => handleNotificationClick(notification)}
+                  role="button"
+                  tabIndex={0}
                 >
-                  <p className="notif-message">{notification.message}</p>
-                  <span className="notif-time">{timeAgo(notification.createdAt)}</span>
-                </button>
+                  <div className="notif-item-content">
+                    <p className="notif-message">{notification.message}</p>
+                    <span className="notif-time">{timeAgo(notification.createdAt)}</span>
+                  </div>
+                  <button
+                    type="button"
+                    className="notif-delete-btn"
+                    aria-label="Delete notification"
+                    onClick={(e) => handleDeleteClick(e, notification._id)}
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M18 6 6 18M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
               ))
             )}
           </div>

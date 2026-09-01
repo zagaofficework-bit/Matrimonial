@@ -1,0 +1,30 @@
+.revenue-by-plan {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+  margin-bottom: 10px;
+}
+
+.revenue-plan-card {
+  text-align: center;
+}
+
+.revenue-plan-card .plan-name {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--color-muted);
+  text-transform: capitalize;
+}
+
+.revenue-plan-card .plan-total {
+  margin: 4px 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--color-text-strong);
+}
+
+.revenue-plan-card .plan-count {
+  margin: 0;
+  font-size: 0.72rem;
+  color: var(--color-muted);
+}

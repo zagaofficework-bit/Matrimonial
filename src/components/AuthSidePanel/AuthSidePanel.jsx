@@ -31,7 +31,7 @@ export default function AuthSidePanel({ eyebrow, title, subtitle }) {
 
       <div className="auth-side-content">
         <span className="auth-side-logo">
-          Soul<span>Tie</span>
+          <span>Tie</span>
         </span>
 
         {eyebrow && <span className="auth-side-eyebrow">{eyebrow}</span>}

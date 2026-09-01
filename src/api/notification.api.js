@@ -18,3 +18,11 @@ export async function markNotificationAsRead(notificationId) {
 export async function markAllNotificationsAsRead() {
   await axiosInstance.patch('/notifications/mark-all-read');
 }
+
+export async function deleteNotification(notificationId) {
+  await axiosInstance.delete(`/notifications/${notificationId}`);
+}
+
+export async function deleteAllNotifications() {
+  await axiosInstance.delete('/notifications/clear-all');
+}

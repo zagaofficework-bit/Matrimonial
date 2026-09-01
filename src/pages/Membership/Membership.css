@@ -1,0 +1,152 @@
+.mem-page {
+  max-width: 1100px;
+}
+
+.mem-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.mem-current-badge {
+  background: var(--color-primary-light);
+  color: var(--color-primary-dark);
+  border: 1px solid rgba(159, 18, 57, 0.2);
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.mem-duration-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.mem-duration-tab {
+  padding: 10px 18px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.mem-duration-tab.active {
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
+  color: var(--color-primary-dark);
+}
+
+.mem-plans-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+@media (max-width: 860px) {
+  .mem-plans-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.mem-plan-card {
+  position: relative;
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 24px 20px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.mem-plan-card.selected {
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-md);
+}
+
+.mem-top-seller {
+  position: absolute;
+  top: -12px;
+  right: 20px;
+  background: var(--color-secondary);
+  color: var(--color-text-inverse);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.mem-plan-radio {
+  margin-bottom: 8px;
+}
+
+.mem-radio-dot {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid var(--color-border);
+}
+
+.mem-radio-dot.checked {
+  border-color: var(--color-primary);
+  background: radial-gradient(var(--color-primary) 0 40%, transparent 45%);
+}
+
+.mem-plan-name {
+  font-size: 18px;
+  margin-bottom: 4px;
+}
+
+.mem-plan-price {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--color-primary-dark);
+  margin-bottom: 16px;
+}
+
+.mem-plan-features {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border);
+}
+
+.mem-feature-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+}
+
+.mem-feature-label {
+  color: var(--color-muted);
+}
+
+.mem-feature-value {
+  font-weight: 700;
+  color: var(--color-text-strong);
+}
+
+.mem-feature-value.yes {
+  color: var(--color-success);
+}
+
+.mem-buy-btn {
+  width: 100%;
+}
+
+.mem-note {
+  margin-top: 20px;
+  text-align: center;
+  color: var(--color-muted);
+  font-size: 12px;
+}

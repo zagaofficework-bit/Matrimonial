@@ -91,6 +91,26 @@ const initialForm = {
   }
 };
 
+// Number-type fields ke liye range validation - inhe blank chhodna allowed
+// hai (optional fields), lekin agar value bhari hai to range ke andar honi
+// chahiye.
+function validateNumberField(name, value) {
+  if (value === '' || value === null || value === undefined) return null;
+  const num = Number(value);
+  if (Number.isNaN(num)) return 'Sirf number daalo.';
+
+  if (name === 'height') {
+    if (num < 100 || num > 250) return 'Height 100 se 250 cm ke beech honi chahiye.';
+  }
+  if (name === 'annualIncome') {
+    if (num < 0) return 'Annual income negative nahi ho sakti.';
+  }
+  if (name === 'siblings') {
+    if (num < 0 || num > 20) return 'Siblings 0 se 20 ke beech honi chahiye.';
+  }
+  return null;
+}
+
 export default function ProfileForm() {
   const navigate = useNavigate();
 
@@ -101,6 +121,7 @@ export default function ProfileForm() {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({});
   const [isExistingProfile, setIsExistingProfile] = useState(false);
   const [importing, setImporting] = useState(false);
   const [importMsg, setImportMsg] = useState('');
@@ -161,10 +182,26 @@ export default function ProfileForm() {
   function handleChange(e) {
     const { name, value } = e.target;
     setForm((f) => ({ ...f, [name]: value }));
+
+    const message = validateNumberField(name, value);
+    setFieldErrors((prev) => {
+      const next = { ...prev };
+      if (message) next[name] = message;
+      else delete next[name];
+      return next;
+    });
   }
 
   function handleNestedChange(section, field, value) {
     setForm((f) => ({ ...f, [section]: { ...f[section], [field]: value } }));
+
+    const message = validateNumberField(field, value);
+    setFieldErrors((prev) => {
+      const next = { ...prev };
+      if (message) next[field] = message;
+      else delete next[field];
+      return next;
+    });
   }
 
   // Joi optional string fields reject "" outright (except bio, which allows it),
@@ -188,6 +225,24 @@ export default function ProfileForm() {
     e.preventDefault();
     setError('');
     setSuccessMsg('');
+
+    const errors = {
+      height: validateNumberField('height', form.height),
+      annualIncome: validateNumberField('annualIncome', form.annualIncome),
+      siblings: validateNumberField('siblings', form.familyDetails.siblings)
+    };
+    Object.keys(errors).forEach((key) => {
+      if (!errors[key]) delete errors[key];
+    });
+    setFieldErrors(errors);
+    if (Object.keys(errors).length > 0) {
+      setError('Kripya highlighted fields theek karo.');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
+    const wasNewProfile = !isExistingProfile;
+
     setSaving(true);
     try {
       const interestsArray = form.interests
@@ -219,6 +274,12 @@ export default function ProfileForm() {
       // "My Profile" dikhaye (page reload ki zaroorat na pade).
       notifyProfileUpdated();
       window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      // Pehli baar profile bani hai - ab partner preferences set karwao,
+      // taaki homepage par match % turant kaam karne lage.
+      if (wasNewProfile) {
+        setTimeout(() => navigate('/preferences?from=profile-create'), 1200);
+      }
     } catch (err) {
       setError(extractErrorMessage(err, 'Profile save nahi ho payi. Please check the details and try again.'));
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -379,7 +440,17 @@ export default function ProfileForm() {
           <div className="form-row">
             <div className="field-group">
               <label htmlFor="height">Height (cm)</label>
-              <input id="height" name="height" type="number" min="100" max="250" value={form.height} onChange={handleChange} />
+              <input
+                id="height"
+                name="height"
+                type="number"
+                min="100"
+                max="250"
+                value={form.height}
+                onChange={handleChange}
+                aria-invalid={Boolean(fieldErrors.height)}
+              />
+              {fieldErrors.height && <span className="field-error">{fieldErrors.height}</span>}
             </div>
             <div className="field-group">
               <label htmlFor="maritalStatus">Marital status</label>
@@ -444,7 +515,16 @@ export default function ProfileForm() {
           <div className="form-row">
             <div className="field-group">
               <label htmlFor="annualIncome">Annual income</label>
-              <input id="annualIncome" name="annualIncome" type="number" min="0" value={form.annualIncome} onChange={handleChange} />
+              <input
+                id="annualIncome"
+                name="annualIncome"
+                type="number"
+                min="0"
+                value={form.annualIncome}
+                onChange={handleChange}
+                aria-invalid={Boolean(fieldErrors.annualIncome)}
+              />
+              {fieldErrors.annualIncome && <span className="field-error">{fieldErrors.annualIncome}</span>}
             </div>
           </div>
         </section>
@@ -501,7 +581,9 @@ export default function ProfileForm() {
                 max="20"
                 value={form.familyDetails.siblings}
                 onChange={(e) => handleNestedChange('familyDetails', 'siblings', e.target.value)}
+                aria-invalid={Boolean(fieldErrors.siblings)}
               />
+              {fieldErrors.siblings && <span className="field-error">{fieldErrors.siblings}</span>}
             </div>
             <div className="field-group">
               <label htmlFor="familyType">Family type</label>

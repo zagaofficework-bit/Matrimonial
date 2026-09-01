@@ -1,0 +1,141 @@
+.conv-list {
+  display: flex;
+  flex-direction: column;
+  width: 320px;
+  min-width: 320px;
+  border-right: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.conv-list-header {
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.conv-list-header h2 {
+  font-size: 18px;
+  margin: 0;
+  color: var(--color-text-strong);
+}
+
+.conv-list-body {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.conv-list-empty {
+  padding: 24px 20px;
+  text-align: center;
+  color: var(--color-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.conv-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 16px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+  cursor: pointer;
+}
+
+.conv-item:hover {
+  background: var(--color-primary-light);
+}
+
+.conv-item-active {
+  background: var(--color-primary-light);
+}
+
+.conv-avatar {
+  flex-shrink: 0;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  font-weight: 700;
+  font-size: 17px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.conv-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.conv-item-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.conv-item-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.conv-item-name {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--color-text-strong);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.conv-item-time {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--color-muted);
+}
+
+.conv-item-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.conv-item-preview {
+  font-size: 13px;
+  color: var(--color-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.conv-item-badge {
+  flex-shrink: 0;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--color-primary);
+  color: var(--color-text-inverse);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+}
+
+@media (max-width: 720px) {
+  .conv-list {
+    width: 100%;
+    min-width: 0;
+    border-right: none;
+  }
+}

@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { getProfileById } from '../../api/profile.api';
 import { getConnectionStatus, respondToInterest, sendInterest } from '../../api/interest.api';
+import { startConversation } from '../../api/chat.api';
+import { getStoriesByUserId } from '../../api/successStory.api';
 import './PublicProfile.css';
 
 // Register page pe "Profile is for" me jo options diye jaate hain, unhi
@@ -127,10 +129,30 @@ export default function PublicProfile() {
     };
   }, [id]);
 
+  // Success stories jinme ye member creator ya tagged partner hai
+  const [profileStoryEntries, setProfileStoryEntries] = useState([]);
+
+  useEffect(() => {
+    const otherUserId = profile?.user?._id;
+    if (!otherUserId) return;
+
+    let isMounted = true;
+    getStoriesByUserId(otherUserId)
+      .then((stories) => {
+        if (isMounted) setProfileStoryEntries(stories);
+      })
+      .catch(() => {});
+
+    return () => {
+      isMounted = false;
+    };
+  }, [profile]);
+
   // "Connect" button ka sahi state (Connect / Requested / Respond / Matched)
   // - profile load hone ke baad uske user id se fetch karta hai.
   const [connection, setConnection] = useState({ status: 'none' });
   const [connectionLoading, setConnectionLoading] = useState(false);
+  const [connectionError, setConnectionError] = useState('');
 
   useEffect(() => {
     const otherUserId = profile?.user?._id;
@@ -153,6 +175,7 @@ export default function PublicProfile() {
     if (!otherUserId || connectionLoading) return;
 
     setConnectionLoading(true);
+    setConnectionError('');
     try {
       await sendInterest(otherUserId);
       const refreshed = await getConnectionStatus(otherUserId);
@@ -161,8 +184,32 @@ export default function PublicProfile() {
       const code = err.response?.data?.error?.code;
       if (code === 'ALREADY_MATCHED') setConnection({ status: 'matched' });
       else if (code === 'ALREADY_SENT') setConnection((c) => ({ ...c, status: 'sent_pending' }));
+      else {
+        // Real failure (network issue, server error, expired session, etc.)
+        // - let the user know instead of failing silently.
+        setConnectionError(err.response?.data?.message || 'Could not send request. Please try again.');
+      }
     } finally {
       setConnectionLoading(false);
+    }
+  }
+
+  // "Message" button - sirf matched profiles ke saath chat shuru ho sakti
+  // hai. Conversation get-or-create karke seedha chat page pe le jaata hai.
+  const [messageLoading, setMessageLoading] = useState(false);
+
+  async function handleMessageClick() {
+    const otherUserId = profile?.user?._id;
+    if (!otherUserId || messageLoading) return;
+
+    setMessageLoading(true);
+    try {
+      const conversation = await startConversation(otherUserId);
+      navigate(`/chat/${conversation._id}`);
+    } catch {
+      // agar match nahi hai ya kuch aur fail ho gaya, button apni jagah rehta hai
+    } finally {
+      setMessageLoading(false);
     }
   }
 
@@ -301,11 +348,17 @@ export default function PublicProfile() {
                 {connectionLoading ? 'Please wait...' : connection.status === 'sent_pending' ? 'Requested' : 'Connect'}
               </button>
             )}
-            <button type="button" className="btn btn-outline btn-sm">
+            <button
+              type="button"
+              className="btn btn-outline btn-sm"
+              onClick={handleMessageClick}
+              disabled={connection.status !== 'matched' || messageLoading}
+              title={connection.status !== 'matched' ? 'Chat sirf match hone ke baad available hai' : undefined}
+            >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
               </svg>
-              Message
+              {messageLoading ? 'Opening...' : 'Message'}
             </button>
             <button type="button" className="btn btn-primary btn-sm">
               <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14">
@@ -314,6 +367,7 @@ export default function PublicProfile() {
               Call
             </button>
           </div>
+          {connectionError && <p className="pub-connect-error">{connectionError}</p>}
         </aside>
 
         {/* ---- Right: structured info ---- */}
@@ -337,12 +391,42 @@ export default function PublicProfile() {
             </p>
           </div>
 
+          {profileStoryEntries.length > 0 && (
+            <section className="pubd-card pubd-success-story-card">
+              <h3>Success Story</h3>
+              <button
+                type="button"
+                className="btn btn-outline btn-sm pubd-view-story-btn"
+                onClick={() => navigate(`/success-stories/${profileStoryEntries[0]._id}`)}
+              >
+                View Her Success Story
+              </button>
+            </section>
+          )}
+
           {profile.bio && (
             <section className="pubd-card">
               <h3>About</h3>
               <p className="pubd-bio">{profile.bio}</p>
             </section>
           )}
+
+          <section className="pubd-card">
+            <h3>Contact Details</h3>
+            {profile.contactVisible ? (
+              <>
+                <DetailRow label="Phone" value={profile.user?.phone} />
+                <DetailRow label="Email" value={profile.user?.email} />
+              </>
+            ) : (
+              <div className="pubd-contact-locked">
+                <p>Contact details sirf Premium members ko dikhte hain.</p>
+                <button type="button" className="btn btn-primary btn-sm" onClick={() => navigate('/membership')}>
+                  Upgrade to Premium
+                </button>
+              </div>
+            )}
+          </section>
 
           <div className="pubd-cards-grid">
             <section className="pubd-card">

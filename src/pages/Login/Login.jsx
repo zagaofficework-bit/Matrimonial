@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth, isStaff } from '../../context/AuthContext';
 import AuthSidePanel from '../../components/AuthSidePanel/AuthSidePanel';
 import './Login.css';
 
@@ -9,20 +9,39 @@ export default function Login() {
   const navigate = useNavigate();
 
   const [form, setForm] = useState({ identifier: '', password: '' });
+  const [fieldErrors, setFieldErrors] = useState({});
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   function handleChange(e) {
-    setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+    setForm((f) => ({ ...f, [name]: value }));
+    setFieldErrors((prev) => {
+      if (value.trim()) {
+        const next = { ...prev };
+        delete next[name];
+        return next;
+      }
+      return prev;
+    });
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
     setError('');
+
+    const errors = {};
+    if (!form.identifier.trim()) errors.identifier = 'Phone ya email daalo.';
+    if (!form.password) errors.password = 'Password daalo.';
+    setFieldErrors(errors);
+    if (Object.keys(errors).length > 0) return;
+
     setLoading(true);
     try {
-      await login(form.identifier, form.password);
-      navigate('/');
+      const loggedInUser = await login(form.identifier, form.password);
+      // Staff (moderator/admin/super_admin) seedha admin dashboard pe
+      // jaate hain; normal members apne home page pe.
+      navigate(isStaff(loggedInUser) ? '/admin' : '/');
     } catch (err) {
       setError(err.response?.data?.message || 'Login fail ho gaya. Dobara try karo.');
     } finally {
@@ -56,12 +75,19 @@ export default function Login() {
                 value={form.identifier}
                 onChange={handleChange}
                 placeholder="9876543210 or you@email.com"
+                aria-invalid={Boolean(fieldErrors.identifier)}
                 required
               />
+              {fieldErrors.identifier && <span className="field-error">{fieldErrors.identifier}</span>}
             </div>
 
             <div className="field-group">
-              <label htmlFor="password">Password</label>
+              <div className="field-label-row">
+                <label htmlFor="password">Password</label>
+                <Link to="/forgot-password" className="forgot-password-link">
+                  Forgot password?
+                </Link>
+              </div>
               <input
                 id="password"
                 name="password"
@@ -69,8 +95,10 @@ export default function Login() {
                 value={form.password}
                 onChange={handleChange}
                 placeholder="********"
+                aria-invalid={Boolean(fieldErrors.password)}
                 required
               />
+              {fieldErrors.password && <span className="field-error">{fieldErrors.password}</span>}
             </div>
 
             <button type="submit" className="btn btn-primary btn-block" disabled={loading}>

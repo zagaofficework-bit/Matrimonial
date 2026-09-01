@@ -176,4 +176,8 @@
     flex-direction: column;
     align-items: stretch;
   }
+
+  .hero-media {
+    display: none;
+  }
 }

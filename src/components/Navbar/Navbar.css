@@ -54,9 +54,39 @@
   gap: 12px;
 }
 
+.navbar-chat-btn {
+  position: relative;
+  background: none;
+  border: none;
+  padding: 8px;
+  border-radius: 50%;
+  color: var(--color-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.navbar-chat-btn:hover {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+.navbar-chat-btn svg {
+  width: 22px;
+  height: 22px;
+}
+
 .navbar-dropdown-highlight {
   color: var(--color-primary);
   font-weight: 700;
+}
+
+.navbar-dropdown-admin {
+  color: var(--color-dark);
+  font-weight: 700;
+  border-top: 1px solid var(--color-border);
+  margin-top: 4px;
+  padding-top: 12px;
 }
 
 .navbar-guest-actions {
@@ -167,4 +197,96 @@
 .navbar-dropdown-danger:hover {
   background: var(--color-error-bg);
   color: var(--color-error);
+}
+
+/* ---- Mobile hamburger ---- */
+.navbar-hamburger-btn {
+  display: none;
+  background: none;
+  border: none;
+  padding: 8px;
+  border-radius: var(--radius-sm);
+  align-items: center;
+  justify-content: center;
+}
+
+.navbar-hamburger-btn:hover {
+  background: var(--color-primary-light);
+}
+
+.navbar-hamburger-icon {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  width: 22px;
+  height: 18px;
+}
+
+.navbar-hamburger-icon span {
+  display: block;
+  height: 2px;
+  width: 100%;
+  border-radius: 2px;
+  background: var(--color-text-strong);
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.navbar-hamburger-icon.is-open span:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+
+.navbar-hamburger-icon.is-open span:nth-child(2) {
+  opacity: 0;
+}
+
+.navbar-hamburger-icon.is-open span:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+.navbar-mobile-menu {
+  display: none;
+}
+
+/* ---- Mobile layout ----
+   Sirf brand, notification bell aur hamburger dikhte hain; baaki sab
+   (nav links, chat icon, avatar dropdown, guest login/register) hamburger
+   ke andar chale jaate hain. */
+@media (max-width: 768px) {
+  .navbar-inner {
+    padding: 0 16px;
+  }
+
+  .navbar-desktop-only {
+    display: none !important;
+  }
+
+  .navbar-hamburger-btn {
+    display: flex;
+  }
+
+  .navbar-mobile-menu {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--color-surface);
+    border-top: 1px solid var(--color-border);
+    box-shadow: var(--shadow-md);
+    max-height: calc(100vh - var(--header-height));
+    overflow-y: auto;
+    z-index: 55;
+    animation: dropdownIn 0.15s ease-out;
+  }
+
+  .navbar-mobile-menu .navbar-dropdown-item {
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .navbar-mobile-divider {
+    height: 1px;
+    background: var(--color-border);
+  }
 }

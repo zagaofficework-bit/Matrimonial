@@ -159,6 +159,18 @@ button {
   box-shadow: 0 0 0 3px var(--color-primary-light);
 }
 
+.field-group input[aria-invalid='true'],
+.field-group select[aria-invalid='true'],
+.field-group textarea[aria-invalid='true'] {
+  border-color: var(--color-error);
+}
+
+.field-group input[aria-invalid='true']:focus,
+.field-group select[aria-invalid='true']:focus,
+.field-group textarea[aria-invalid='true']:focus {
+  box-shadow: 0 0 0 3px var(--color-error-bg);
+}
+
 .field-group textarea {
   resize: vertical;
   min-height: 90px;
