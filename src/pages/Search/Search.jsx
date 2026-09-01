@@ -3,10 +3,10 @@ import ProfileCard from '../../components/ProfileCard/ProfileCard';
 import FilterTab from '../../components/Filtertabs/FilterTab';
 import { searchProfiles } from '../../api/search.api';
 import { getSavedProfileIds } from '../../api/savedProfile.api';
-import { STATE_OPTIONS } from '../../utils/StateOptions';
-import { EDUCATION_OPTIONS } from '../../utils/EducationOptions';
-import { OCCUPATION_OPTIONS } from '../../utils/OccupationOptions';
-import { CASTE_OPTIONS } from '../../utils/CasteOptions';
+import { STATE_OPTIONS } from '../../utils/Stateoptions';
+import { EDUCATION_OPTIONS } from '../../utils/Educationoptions';
+import { OCCUPATION_OPTIONS } from '../../utils/Occupationoptions';
+import { CASTE_OPTIONS } from '../../utils/Casteoptions';
 import './Search.css';
 
 const EMPTY_FILTERS = {
