@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import './MultiselectDropdown.css';
+import './Multiselectdropdown.css';
 
 function ChevronIcon() {
   return (
