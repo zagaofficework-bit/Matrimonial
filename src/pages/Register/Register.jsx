@@ -16,41 +16,85 @@ const initialForm = {
   city: ''
 };
 
-// Har field ke liye validation rule - agar koi problem hai to uska readable
-// message return karta hai, warna null (matlab field theek hai).
+// Validation rules for each field.
+// Returns a readable error message if invalid, otherwise null.
 function validateField(name, value, form) {
   switch (name) {
     case 'name':
-      if (!value.trim()) return 'Naam zaruri hai.';
-      if (value.trim().length < 2) return 'Naam kam se kam 2 characters ka hona chahiye.';
+      if (!value.trim()) return 'Name is required.';
+      if (value.trim().length < 2) {
+        return 'Name must be at least 2 characters long.';
+      }
       return null;
+
     case 'gender':
-      if (!value) return 'Gender select karo.';
+      if (!value) return 'Please select your gender.';
       return null;
+
     case 'dob': {
-      if (!value) return 'Date of birth zaruri hai.';
-      const age = Math.floor((Date.now() - new Date(value).getTime()) / (1000 * 60 * 60 * 24 * 365.25));
-      if (Number.isNaN(age)) return 'Sahi date of birth daalo.';
-      if (age < 18) return 'Registration ke liye 18 saal ya usse zyada age zaruri hai.';
-      if (age > 100) return 'Sahi date of birth daalo.';
+      if (!value) return 'Date of birth is required.';
+
+      const age = Math.floor(
+        (Date.now() - new Date(value).getTime()) /
+          (1000 * 60 * 60 * 24 * 365.25)
+      );
+
+      if (Number.isNaN(age)) {
+        return 'Please enter a valid date of birth.';
+      }
+
+      if (age < 18) {
+        return 'You must be at least 18 years old to register.';
+      }
+
+      if (age > 100) {
+        return 'Please enter a valid date of birth.';
+      }
+
       return null;
     }
+
     case 'profileType':
-      if (!value) return 'Profile kiske liye hai, ye select karo.';
+      if (!value) {
+        return 'Please select who this profile is for.';
+      }
       return null;
+
     case 'phone':
-      if (!value.trim()) return 'Phone number zaruri hai.';
-      if (!/^[6-9]\d{9}$/.test(value.trim())) return '10 digit ka valid Indian phone number daalo.';
+      if (!value.trim()) {
+        return 'Phone number is required.';
+      }
+
+      if (!/^[6-9]\d{9}$/.test(value.trim())) {
+        return 'Please enter a valid 10-digit Indian phone number.';
+      }
+
       return null;
+
     case 'email':
-      if (value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())) return 'Sahi email format daalo.';
+      if (
+        value &&
+        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())
+      ) {
+        return 'Please enter a valid email address.';
+      }
+
       return null;
+
     case 'password':
-      if (!value) return 'Password zaruri hai.';
-      if (value.length < 8) return 'Password kam se kam 8 characters ka hona chahiye.';
+      if (!value) {
+        return 'Password is required.';
+      }
+
+      if (value.length < 8) {
+        return 'Password must be at least 8 characters long.';
+      }
+
       return null;
+
     case 'city':
       return null;
+
     default:
       return null;
   }
@@ -58,10 +102,15 @@ function validateField(name, value, form) {
 
 function validateForm(form) {
   const errors = {};
+
   Object.keys(form).forEach((key) => {
     const message = validateField(key, form[key], form);
-    if (message) errors[key] = message;
+
+    if (message) {
+      errors[key] = message;
+    }
   });
+
   return errors;
 }
 
@@ -76,13 +125,27 @@ export default function Register() {
 
   function handleChange(e) {
     const { name, value } = e.target;
-    setForm((f) => ({ ...f, [name]: value }));
-    // Field me kuch type karte hi uska apna error clear/update ho jaye
+
+    setForm((f) => ({
+      ...f,
+      [name]: value
+    }));
+
+    // Clear or update the field error as the user types.
     setFieldErrors((prev) => {
-      const message = validateField(name, value, form);
+      const message = validateField(name, value, {
+        ...form,
+        [name]: value
+      });
+
       const next = { ...prev };
-      if (message) next[name] = message;
-      else delete next[name];
+
+      if (message) {
+        next[name] = message;
+      } else {
+        delete next[name];
+      }
+
       return next;
     });
   }
@@ -92,21 +155,35 @@ export default function Register() {
     setError('');
 
     const errors = validateForm(form);
+
     setFieldErrors(errors);
+
     if (Object.keys(errors).length > 0) {
-      setError('Kripya form me highlighted galtiyaan theek karo.');
+      setError('Please fix the highlighted errors in the form.');
       return;
     }
 
     setLoading(true);
+
     try {
       const payload = { ...form };
-      if (!payload.email) delete payload.email;
-      if (!payload.city) delete payload.city;
+
+      if (!payload.email) {
+        delete payload.email;
+      }
+
+      if (!payload.city) {
+        delete payload.city;
+      }
+
       await register(payload);
+
       navigate('/');
     } catch (err) {
-      setError(err.response?.data?.message || 'Registration fail ho gaya. Dobara try karo.');
+      setError(
+        err.response?.data?.message ||
+          'Registration failed. Please try again.'
+      );
     } finally {
       setLoading(false);
     }
@@ -123,15 +200,26 @@ export default function Register() {
       <div className="auth-form-side">
         <div className="auth-card auth-card-wide">
           <span className="auth-card-eyebrow">Get Started</span>
-          <h1 className="auth-card-title">Create your account</h1>
-          <p className="auth-subtitle">A few details to get you started</p>
 
-          {error && <div className="alert alert-error">{error}</div>}
+          <h1 className="auth-card-title">
+            Create your account
+          </h1>
+
+          <p className="auth-subtitle">
+            A few details to get you started
+          </p>
+
+          {error && (
+            <div className="alert alert-error">
+              {error}
+            </div>
+          )}
 
           <form onSubmit={handleSubmit}>
             <div className="form-row">
               <div className="field-group">
                 <label htmlFor="name">Full name</label>
+
                 <input
                   id="name"
                   name="name"
@@ -140,11 +228,17 @@ export default function Register() {
                   aria-invalid={Boolean(fieldErrors.name)}
                   required
                 />
-                {fieldErrors.name && <span className="field-error">{fieldErrors.name}</span>}
+
+                {fieldErrors.name && (
+                  <span className="field-error">
+                    {fieldErrors.name}
+                  </span>
+                )}
               </div>
 
               <div className="field-group">
                 <label htmlFor="gender">Gender</label>
+
                 <select
                   id="gender"
                   name="gender"
@@ -158,13 +252,19 @@ export default function Register() {
                   <option value="female">Female</option>
                   <option value="other">Other</option>
                 </select>
-                {fieldErrors.gender && <span className="field-error">{fieldErrors.gender}</span>}
+
+                {fieldErrors.gender && (
+                  <span className="field-error">
+                    {fieldErrors.gender}
+                  </span>
+                )}
               </div>
             </div>
 
             <div className="form-row">
               <div className="field-group">
                 <label htmlFor="dob">Date of birth</label>
+
                 <input
                   id="dob"
                   name="dob"
@@ -174,11 +274,19 @@ export default function Register() {
                   aria-invalid={Boolean(fieldErrors.dob)}
                   required
                 />
-                {fieldErrors.dob && <span className="field-error">{fieldErrors.dob}</span>}
+
+                {fieldErrors.dob && (
+                  <span className="field-error">
+                    {fieldErrors.dob}
+                  </span>
+                )}
               </div>
 
               <div className="field-group">
-                <label htmlFor="profileType">Profile is for</label>
+                <label htmlFor="profileType">
+                  Profile is for
+                </label>
+
                 <select
                   id="profileType"
                   name="profileType"
@@ -194,13 +302,19 @@ export default function Register() {
                   <option value="relative">My relative</option>
                   <option value="friend">My friend</option>
                 </select>
-                {fieldErrors.profileType && <span className="field-error">{fieldErrors.profileType}</span>}
+
+                {fieldErrors.profileType && (
+                  <span className="field-error">
+                    {fieldErrors.profileType}
+                  </span>
+                )}
               </div>
             </div>
 
             <div className="form-row">
               <div className="field-group">
                 <label htmlFor="phone">Phone</label>
+
                 <input
                   id="phone"
                   name="phone"
@@ -210,11 +324,19 @@ export default function Register() {
                   aria-invalid={Boolean(fieldErrors.phone)}
                   required
                 />
-                {fieldErrors.phone && <span className="field-error">{fieldErrors.phone}</span>}
+
+                {fieldErrors.phone && (
+                  <span className="field-error">
+                    {fieldErrors.phone}
+                  </span>
+                )}
               </div>
 
               <div className="field-group">
-                <label htmlFor="email">Email (optional)</label>
+                <label htmlFor="email">
+                  Email (optional)
+                </label>
+
                 <input
                   id="email"
                   name="email"
@@ -223,13 +345,19 @@ export default function Register() {
                   onChange={handleChange}
                   aria-invalid={Boolean(fieldErrors.email)}
                 />
-                {fieldErrors.email && <span className="field-error">{fieldErrors.email}</span>}
+
+                {fieldErrors.email && (
+                  <span className="field-error">
+                    {fieldErrors.email}
+                  </span>
+                )}
               </div>
             </div>
 
             <div className="form-row">
               <div className="field-group">
                 <label htmlFor="password">Password</label>
+
                 <input
                   id="password"
                   name="password"
@@ -240,22 +368,40 @@ export default function Register() {
                   aria-invalid={Boolean(fieldErrors.password)}
                   required
                 />
-                {fieldErrors.password && <span className="field-error">{fieldErrors.password}</span>}
+
+                {fieldErrors.password && (
+                  <span className="field-error">
+                    {fieldErrors.password}
+                  </span>
+                )}
               </div>
 
               <div className="field-group">
-                <label htmlFor="city">City (optional)</label>
-                <input id="city" name="city" value={form.city} onChange={handleChange} />
+                <label htmlFor="city">
+                  City (optional)
+                </label>
+
+                <input
+                  id="city"
+                  name="city"
+                  value={form.city}
+                  onChange={handleChange}
+                />
               </div>
             </div>
 
-            <button type="submit" className="btn btn-primary btn-block" disabled={loading}>
+            <button
+              type="submit"
+              className="btn btn-primary btn-block"
+              disabled={loading}
+            >
               {loading ? 'Creating account...' : 'Register'}
             </button>
           </form>
 
           <p className="auth-footer">
-            Already have an account? <Link to="/login">Login</Link>
+            Already have an account?{' '}
+            <Link to="/login">Login</Link>
           </p>
         </div>
       </div>
