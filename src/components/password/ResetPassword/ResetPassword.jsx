@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
-import { resetPasswordWithToken } from "../../../api/auth.api";
+import { resetPasswordWithToken } from '../../../api/auth.api';
 import './ResetPassword.css';
 
 export default function ResetPassword() {
@@ -18,21 +18,27 @@ export default function ResetPassword() {
     setError('');
 
     if (newPassword.length < 8) {
-      setError('Password kam se kam 8 characters ka hona chahiye.');
+      setError('Password must be at least 8 characters long.');
       return;
     }
+
     if (newPassword !== confirmPassword) {
-      setError('Dono password same nahi hain.');
+      setError('Both passwords must match.');
       return;
     }
 
     setLoading(true);
+
     try {
       await resetPasswordWithToken(token, newPassword);
       setDone(true);
+
       setTimeout(() => navigate('/login'), 2000);
     } catch (err) {
-      setError(err.response?.data?.message || 'Link invalid ya expire ho chuka hai. Dobara try karo.');
+      setError(
+        err.response?.data?.message ||
+          'The reset link is invalid or has expired. Please try again.'
+      );
     } finally {
       setLoading(false);
     }
@@ -42,15 +48,17 @@ export default function ResetPassword() {
     <div className="reset-password-page">
       <div className="reset-password-outer">
         <div className="reset-password-card">
-          <h1>Naya password set karo</h1>
+          <h1>Set a New Password</h1>
 
           {done ? (
             <p className="reset-password-success">
-              Password reset ho gaya! Login page pe bhej rahe hain...
+              Your password has been reset successfully! Redirecting you
+              to the login page...
             </p>
           ) : (
             <form onSubmit={handleSubmit}>
-              <label htmlFor="rp-new">Naya password</label>
+              <label htmlFor="rp-new">New Password</label>
+
               <input
                 id="rp-new"
                 type="password"
@@ -58,10 +66,13 @@ export default function ResetPassword() {
                 onChange={(e) => setNewPassword(e.target.value)}
                 required
                 minLength={8}
-                placeholder="Kam se kam 8 characters"
+                placeholder="At least 8 characters"
               />
 
-              <label htmlFor="rp-confirm">Naya password dobara</label>
+              <label htmlFor="rp-confirm">
+                Confirm New Password
+              </label>
+
               <input
                 id="rp-confirm"
                 type="password"
@@ -69,18 +80,23 @@ export default function ResetPassword() {
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
                 minLength={8}
+                placeholder="Re-enter your password"
               />
 
-              {error && <p className="reset-password-error">{error}</p>}
+              {error && (
+                <p className="reset-password-error">
+                  {error}
+                </p>
+              )}
 
               <button type="submit" disabled={loading}>
-                {loading ? 'Set kar rahe hain...' : 'Password reset karo'}
+                {loading ? 'Resetting...' : 'Reset Password'}
               </button>
             </form>
           )}
 
           <Link to="/login" className="reset-password-back">
-            &larr; Login pe wapas jao
+            &larr; Back to Login
           </Link>
         </div>
       </div>

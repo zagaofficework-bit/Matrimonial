@@ -13,13 +13,18 @@ export default function ForgotPassword() {
     e.preventDefault();
     setError('');
     setLoading(true);
+
     try {
       await forgotPassword(email);
-      // Backend jaan-bujh kar ye batata nahi ki email exist karta hai ya
-      // nahi (security), isliye success hi dikhate hain hamesha.
+
+      // The backend intentionally does not reveal whether
+      // the email exists for security reasons, so we always show success.
       setSubmitted(true);
     } catch (err) {
-      setError(err.response?.data?.message || 'Kuch galat ho gaya. Dobara try karo.');
+      setError(
+        err.response?.data?.message ||
+          'Something went wrong. Please try again.'
+      );
     } finally {
       setLoading(false);
     }
@@ -29,19 +34,23 @@ export default function ForgotPassword() {
     <div className="forgot-password-page">
       <div className="forgot-password-outer">
         <div className="forgot-password-card">
-          <h1>Password bhool gaye?</h1>
+          <h1>Forgot Password?</h1>
 
           {submitted ? (
             <p className="forgot-password-success">
-              Agar is email se account hai, to reset link bhej diya gaya hai. Apna inbox check karo (30 minute ke liye valid hai).
+              If an account exists with this email, a password reset link
+              has been sent. Please check your inbox. The link is valid
+              for 30 minutes.
             </p>
           ) : (
             <form onSubmit={handleSubmit}>
               <p className="forgot-password-subtitle">
-                Apna registered email daalo, hum tumhe password reset link bhej denge.
+                Enter your registered email address and we will send you
+                a password reset link.
               </p>
 
               <label htmlFor="fp-email">Email</label>
+
               <input
                 id="fp-email"
                 type="email"
@@ -51,16 +60,20 @@ export default function ForgotPassword() {
                 placeholder="you@example.com"
               />
 
-              {error && <p className="forgot-password-error">{error}</p>}
+              {error && (
+                <p className="forgot-password-error">
+                  {error}
+                </p>
+              )}
 
               <button type="submit" disabled={loading}>
-                {loading ? 'Bhej rahe hain...' : 'Reset link bhejo'}
+                {loading ? 'Sending...' : 'Send Reset Link'}
               </button>
             </form>
           )}
 
           <Link to="/login" className="forgot-password-back">
-            &larr; Login pe wapas jao
+            &larr; Back to Login
           </Link>
         </div>
       </div>
