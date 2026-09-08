@@ -3,12 +3,12 @@ import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { getMyPreferences, saveMyPreferences } from '../../api/preference.api';
 import MultiSelectDropdown from "../../components/MultiSelectDropDown/MultiSelectDropdown";
 import { HEIGHT_OPTIONS } from '../../utils/Heightoptions';
-import { INCOME_AMOUNT_OPTIONS } from '../../utils/Incomeoptions';
+import { INCOME_AMOUNT_OPTIONS, bracketToRupees, rupeesToBracket, bracketIndex } from '../../utils/Incomeoptions';
+import { RELIGION_OPTIONS } from '../../utils/Religionoptions';
+import { CASTE_OPTIONS } from '../../utils/Casteoptions';
+import { EDUCATION_OPTIONS } from '../../utils/Educationoptions';
+import { MOTHER_TONGUE_OPTIONS } from '../../utils/MotherTongueoptions';
 import './Preferences.css';
-
-const RELIGION_OPTIONS = ['Hindu', 'Muslim', 'Christian', 'Sikh', 'Jain', 'Buddhist', 'Parsi', 'Jewish', 'Other'].map(
-  (opt) => ({ value: opt, label: opt })
-);
 
 const DIET_OPTIONS = [
   { value: 'vegetarian', label: 'Vegetarian' },
@@ -40,10 +40,10 @@ const initialForm = {
   incomeMin: '',
   incomeMax: '',
   religion: [],
-  caste: '',
-  education: '',
+  caste: [],
+  education: [],
   location: '',
-  motherTongue: '',
+  motherTongue: [],
   diet: [],
   maritalStatus: [],
   profilePostedBy: [],
@@ -54,18 +54,15 @@ function extractErrorMessage(err, fallback) {
   const data = err?.response?.data;
   if (!data) return err?.message || fallback;
 
-  if (Array.isArray(data.errors) && data.errors.length > 0) {
-    return data.errors
-      .map((item) => (typeof item === 'string' ? item : item.message || item.msg))
-      .filter(Boolean)
-      .join(' | ');
+  // Backend format: { message, error: { code, details: [...] } }
+  if (Array.isArray(data.error?.details) && data.error.details.length > 0) {
+    return data.error.details.join(' | ');
   }
 
   if (data.message) return data.message;
   return fallback;
 }
-
-// "Hindu, Punjabi" jaisi comma-separated string ko clean array me todta hai.
+// Splits a comma-separated string like "Mumbai, Pune" into a clean array.
 function tagsToArray(str) {
   return str
     .split(',')
@@ -101,20 +98,20 @@ export default function Preferences() {
           ageMax: pref.ageRange?.max ?? '',
           heightMin: pref.heightRange?.min ?? '',
           heightMax: pref.heightRange?.max ?? '',
-          incomeMin: pref.incomeRange?.min ?? '',
-          incomeMax: pref.incomeRange?.max ?? '',
+          incomeMin: rupeesToBracket(pref.incomeRange?.min),
+          incomeMax: rupeesToBracket(pref.incomeRange?.max),
           religion: pref.religion || [],
-          caste: arrayToTags(pref.caste),
-          education: arrayToTags(pref.education),
+          caste: pref.caste || [],
+          education: pref.education || [],
           location: arrayToTags(pref.location),
-          motherTongue: arrayToTags(pref.motherTongue),
+          motherTongue: pref.motherTongue || [],
           diet: pref.diet || [],
           maritalStatus: pref.maritalStatus || [],
           profilePostedBy: pref.profilePostedBy || [],
           strictFilter: Boolean(pref.strictFilter)
         });
       } catch {
-        // 404 PREFERENCE_NOT_FOUND -> pehli baar hai, defaults hi rehne do.
+        // 404 PREFERENCE_NOT_FOUND -> first time, keep the defaults.
       } finally {
         if (isMounted) setLoading(false);
       }
@@ -132,7 +129,18 @@ export default function Preferences() {
 
   function validateRangePair(minVal, maxVal, label) {
     if (minVal !== '' && maxVal !== '' && Number(minVal) > Number(maxVal)) {
-      return `${label}: min, max se bada nahi ho sakta.`;
+      return `${label}: min cannot be greater than max.`;
+    }
+    return null;
+  }
+
+  // Income uses bracket strings ("3-5", "100+"), not plain numbers, so it
+  // can't be compared with Number(minVal) > Number(maxVal) like the other
+  // ranges - that would just produce NaN on both sides. Compare by each
+  // bracket's position in the ordered options list instead.
+  function validateIncomeRangePair(minVal, maxVal) {
+    if (minVal !== '' && maxVal !== '' && bracketIndex(minVal) > bracketIndex(maxVal)) {
+      return 'Salary: min cannot be greater than max.';
     }
     return null;
   }
@@ -145,6 +153,17 @@ export default function Preferences() {
     return range;
   }
 
+  // Converts the two selected income brackets into a plain-rupee
+  // { min, max } range for the backend (see bracketToRupees in
+  // utils/Incomeoptions.js for why this can't just be Number(bracket)).
+  function buildIncomeRange(minVal, maxVal) {
+    if (minVal === '' && maxVal === '') return undefined;
+    const range = {};
+    if (minVal !== '') range.min = bracketToRupees(minVal, 'min');
+    if (maxVal !== '') range.max = bracketToRupees(maxVal, 'max');
+    return range;
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
     setError('');
@@ -153,14 +172,14 @@ export default function Preferences() {
     const errors = {
       ageRange: validateRangePair(form.ageMin, form.ageMax, 'Age'),
       heightRange: validateRangePair(form.heightMin, form.heightMax, 'Height'),
-      incomeRange: validateRangePair(form.incomeMin, form.incomeMax, 'Salary')
+      incomeRange: validateIncomeRangePair(form.incomeMin, form.incomeMax)
     };
     Object.keys(errors).forEach((key) => {
       if (!errors[key]) delete errors[key];
     });
     setRangeErrors(errors);
     if (Object.keys(errors).length > 0) {
-      setError('Kripya highlighted fields theek karo.');
+      setError('Please fix the highlighted fields.');
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
@@ -170,12 +189,12 @@ export default function Preferences() {
       const payload = {
         ageRange: buildRange(form.ageMin, form.ageMax),
         heightRange: buildRange(form.heightMin, form.heightMax),
-        incomeRange: buildRange(form.incomeMin, form.incomeMax),
+        incomeRange: buildIncomeRange(form.incomeMin, form.incomeMax),
         religion: form.religion,
-        caste: tagsToArray(form.caste),
-        education: tagsToArray(form.education),
+        caste: form.caste,
+        education: form.education,
         location: tagsToArray(form.location),
-        motherTongue: tagsToArray(form.motherTongue),
+        motherTongue: form.motherTongue,
         diet: form.diet,
         maritalStatus: form.maritalStatus,
         profilePostedBy: form.profilePostedBy,
@@ -193,7 +212,7 @@ export default function Preferences() {
         setTimeout(() => navigate('/'), 1200);
       }
     } catch (err) {
-      setError(extractErrorMessage(err, 'Preferences save nahi ho payi. Please try again.'));
+      setError(extractErrorMessage(err, 'Preferences could not be saved. Please try again.'));
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
       setSaving(false);
@@ -328,31 +347,29 @@ export default function Preferences() {
               selected={form.profilePostedBy}
               onChange={(val) => setField('profilePostedBy', val)}
             />
+            <MultiSelectDropdown
+              label="Caste"
+              options={CASTE_OPTIONS}
+              selected={form.caste}
+              onChange={(val) => setField('caste', val)}
+            />
+            <MultiSelectDropdown
+              label="Education"
+              options={EDUCATION_OPTIONS}
+              selected={form.education}
+              onChange={(val) => setField('education', val)}
+            />
+            <MultiSelectDropdown
+              label="Mother Tongue"
+              options={MOTHER_TONGUE_OPTIONS}
+              selected={form.motherTongue}
+              onChange={(val) => setField('motherTongue', val)}
+            />
           </div>
         </section>
 
         <section className="preferences-section">
           <h3>More Details</h3>
-          <div className="field-group">
-            <label htmlFor="caste">Caste (comma separated)</label>
-            <input
-              id="caste"
-              type="text"
-              placeholder="e.g. Brahmin, Rajput"
-              value={form.caste}
-              onChange={(e) => setField('caste', e.target.value)}
-            />
-          </div>
-          <div className="field-group">
-            <label htmlFor="education">Education (comma separated)</label>
-            <input
-              id="education"
-              type="text"
-              placeholder="e.g. B.Tech, MBA"
-              value={form.education}
-              onChange={(e) => setField('education', e.target.value)}
-            />
-          </div>
           <div className="field-group">
             <label htmlFor="location">Location - city / state (comma separated)</label>
             <input
@@ -361,16 +378,6 @@ export default function Preferences() {
               placeholder="e.g. Mumbai, Pune"
               value={form.location}
               onChange={(e) => setField('location', e.target.value)}
-            />
-          </div>
-          <div className="field-group">
-            <label htmlFor="motherTongue">Mother Tongue (comma separated)</label>
-            <input
-              id="motherTongue"
-              type="text"
-              placeholder="e.g. Hindi, Marathi"
-              value={form.motherTongue}
-              onChange={(e) => setField('motherTongue', e.target.value)}
             />
           </div>
         </section>

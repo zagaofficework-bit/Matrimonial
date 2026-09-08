@@ -25,7 +25,10 @@ import SuccessStoriesList from "./pages/SuccessStories/SuccessStoriesList";
 import SuccessStoryDetail from "./pages/SuccessStories/SuccessStoryDetail";
 import AddSuccessStory from "./pages/SuccessStories/AddSuccessStory";
 
-// Admin panel pages - all nested under /admin, wrapped in AdminLayout below
+// Privacy Policy
+import PrivacyPolicy from "./pages/PrivacyPolicy/PrivacyPolicy";
+
+// Admin panel pages
 import AdminDashboard from "./pages/admin/AdminDashboard/Dashboard";
 import UserDirectory from "./pages/admin/Users/UserDirectory";
 import Verifications from "./pages/admin/Verifications/Verifications";
@@ -39,12 +42,7 @@ import AuditLogs from "./pages/admin/AuditLogs/AuditLogs";
 function App() {
   const location = useLocation();
 
-  // Navbar/Footer hide on these pages. Chat WhatsApp jaisa full-screen
-  // immersive hai - Navbar/Footer dikhne se total page height 100vh se
-  // zyada ho jaati thi, jiski wajah se naya message aane pe pura page
-  // (sirf chat window nahi) neeche scroll ho jaata tha.
-  // Admin panel bhi apna khud ka Sidebar/Topbar layout use karta hai,
-  // isliye member Navbar/Footer wahan bhi hide rehta hai.
+  // Hide Navbar/Footer on specific pages
   const hideLayout =
     location.pathname === "/login" ||
     location.pathname === "/register" ||
@@ -58,13 +56,31 @@ function App() {
       {!hideLayout && <Navbar />}
 
       <Routes>
-        {/* Public Routes */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password/:token" element={<ResetPassword />} />
 
-        {/* Protected Routes */}
+        {/* ==================== Public Routes ==================== */}
+
+        <Route path="/login" element={<Login />} />
+
+        <Route path="/register" element={<Register />} />
+
+        <Route
+          path="/forgot-password"
+          element={<ForgotPassword />}
+        />
+
+        <Route
+          path="/reset-password/:token"
+          element={<ResetPassword />}
+        />
+
+        {/* Privacy Policy */}
+        <Route
+          path="/privacy-policy"
+          element={<PrivacyPolicy />}
+        />
+
+        {/* ==================== Protected Routes ==================== */}
+
         <Route
           path="/"
           element={
@@ -200,9 +216,8 @@ function App() {
           }
         />
 
-        {/* Admin Panel - nested under /admin, own Sidebar/Topbar layout.
-            Only reachable by moderator/admin/super_admin accounts (see
-            AdminRoute + Login.jsx's post-login redirect). */}
+        {/* ==================== Admin Panel ==================== */}
+
         <Route
           path="/admin"
           element={
@@ -211,7 +226,11 @@ function App() {
             </AdminRoute>
           }
         >
-          <Route index element={<AdminDashboard />} />
+          <Route
+            index
+            element={<AdminDashboard />}
+          />
+
           <Route
             path="users"
             element={
@@ -220,6 +239,7 @@ function App() {
               </AdminRoute>
             }
           />
+
           <Route
             path="verifications"
             element={
@@ -228,6 +248,7 @@ function App() {
               </AdminRoute>
             }
           />
+
           <Route
             path="photos"
             element={
@@ -236,6 +257,7 @@ function App() {
               </AdminRoute>
             }
           />
+
           <Route
             path="reports"
             element={
@@ -244,6 +266,7 @@ function App() {
               </AdminRoute>
             }
           />
+
           <Route
             path="plans"
             element={
@@ -252,6 +275,7 @@ function App() {
               </AdminRoute>
             }
           />
+
           <Route
             path="revenue"
             element={
@@ -260,6 +284,7 @@ function App() {
               </AdminRoute>
             }
           />
+
           <Route
             path="staff"
             element={
@@ -268,6 +293,7 @@ function App() {
               </AdminRoute>
             }
           />
+
           <Route
             path="audit-logs"
             element={
@@ -277,6 +303,7 @@ function App() {
             }
           />
         </Route>
+
       </Routes>
 
       {!hideLayout && <Footer />}

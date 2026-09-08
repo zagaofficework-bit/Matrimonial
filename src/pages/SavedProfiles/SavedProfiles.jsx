@@ -14,36 +14,66 @@ export default function SavedProfiles() {
     async function loadSavedProfiles() {
       try {
         const data = await getSavedProfiles();
-        if (isMounted) setSavedProfiles(data);
+
+        if (isMounted) {
+          setSavedProfiles(data);
+        }
       } catch (err) {
-        if (isMounted) setError(err.response?.data?.message || 'Saved profiles load nahi ho payi.');
+        if (isMounted) {
+          setError(
+            err.response?.data?.message ||
+              'Unable to load saved profiles.'
+          );
+        }
       } finally {
-        if (isMounted) setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     }
 
     loadSavedProfiles();
+
     return () => {
       isMounted = false;
     };
   }, []);
 
-  // Card se "unsave" hone pe list se turant hata do - refetch ki zaroorat nahi
+  // Remove the profile from the list immediately when it is unsaved.
+  // No refetch is required.
   function handleUnsave(profileId) {
-    setSavedProfiles((prev) => prev.filter((entry) => entry.profile._id !== profileId));
+    setSavedProfiles((prev) =>
+      prev.filter((entry) => entry.profile._id !== profileId)
+    );
   }
 
   return (
     <div className="page-container">
       <div className="saved-profiles-header">
         <h2>Saved Profiles</h2>
-        <p className="saved-profiles-subtitle">Profiles jo tumne baad me dekhne ke liye save ki hain</p>
+
+        <p className="saved-profiles-subtitle">
+          Profiles you saved to view later
+        </p>
       </div>
 
-      {loading && <p className="state-message">Loading saved profiles...</p>}
-      {!loading && error && <p className="state-message">{error}</p>}
+      {loading && (
+        <p className="state-message">
+          Loading saved profiles...
+        </p>
+      )}
+
+      {!loading && error && (
+        <p className="state-message">
+          {error}
+        </p>
+      )}
+
       {!loading && !error && savedProfiles.length === 0 && (
-        <p className="state-message">Abhi tak koi profile save nahi ki. Search ya Home page se bookmark icon dabao!</p>
+        <p className="state-message">
+          You have not saved any profiles yet. Click the bookmark
+          icon from the Search or Home page to save a profile.
+        </p>
       )}
 
       {!loading && !error && savedProfiles.length > 0 && (

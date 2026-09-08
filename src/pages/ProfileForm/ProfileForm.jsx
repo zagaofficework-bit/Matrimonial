@@ -8,6 +8,14 @@ import {
   importBioData
 } from '../../api/profile.api';
 import { notifyProfileUpdated } from '../../hooks/useMyProfileStatus';
+import { RELIGION_OPTIONS } from '../../utils/Religionoptions';
+import { CASTE_OPTIONS } from '../../utils/Casteoptions';
+import { EDUCATION_OPTIONS } from '../../utils/Educationoptions';
+import { OCCUPATION_OPTIONS } from '../../utils/Occupationoptions';
+import { STATE_OPTIONS } from '../../utils/Stateoptions';
+import { HEIGHT_OPTIONS } from '../../utils/Heightoptions';
+import { INCOME_AMOUNT_OPTIONS } from '../../utils/Incomeoptions';
+import { MOTHER_TONGUE_OPTIONS } from '../../utils/MotherTongueoptions';
 import './ProfileForm.css';
 
 // Backend se aane wale error ke alag-alag shapes ko ek readable
@@ -97,16 +105,16 @@ const initialForm = {
 function validateNumberField(name, value) {
   if (value === '' || value === null || value === undefined) return null;
   const num = Number(value);
-  if (Number.isNaN(num)) return 'Sirf number daalo.';
+  if (Number.isNaN(num)) return 'Please enter a valid number.';
 
   if (name === 'height') {
-    if (num < 100 || num > 250) return 'Height 100 se 250 cm ke beech honi chahiye.';
+    if (num < 100 || num > 250) return 'Height must be between 100 and 250 cm.';
   }
   if (name === 'annualIncome') {
-    if (num < 0) return 'Annual income negative nahi ho sakti.';
+    if (num < 0) return 'Annual income cannot be negative.';
   }
   if (name === 'siblings') {
-    if (num < 0 || num > 20) return 'Siblings 0 se 20 ke beech honi chahiye.';
+    if (num < 0 || num > 20) return 'Number of siblings must be between 0 and 20.';
   }
   return null;
 }
@@ -236,7 +244,7 @@ export default function ProfileForm() {
     });
     setFieldErrors(errors);
     if (Object.keys(errors).length > 0) {
-      setError('Kripya highlighted fields theek karo.');
+      setError('Please fix the highlighted fields.');
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
@@ -281,7 +289,7 @@ export default function ProfileForm() {
         setTimeout(() => navigate('/preferences?from=profile-create'), 1200);
       }
     } catch (err) {
-      setError(extractErrorMessage(err, 'Profile save nahi ho payi. Please check the details and try again.'));
+      setError(extractErrorMessage(err, 'Profile could not be saved. Please check the details and try again.'));
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } finally {
       setSaving(false);
@@ -297,7 +305,7 @@ export default function ProfileForm() {
       const updatedProfile = await uploadProfilePhoto(file);
       setPhotos(updatedProfile.photos || []);
     } catch (err) {
-      setError(extractErrorMessage(err, 'Photo upload nahi ho payi. Please try a different image.'));
+      setError(extractErrorMessage(err, 'Photo upload failed. Please try a different image.'));
     } finally {
       setUploading(false);
       e.target.value = '';
@@ -309,7 +317,7 @@ export default function ProfileForm() {
       const updatedProfile = await deleteProfilePhoto(photoId);
       setPhotos(updatedProfile.photos || []);
     } catch (err) {
-      setError(extractErrorMessage(err, 'Photo delete nahi ho payi. Please try again.'));
+      setError(extractErrorMessage(err, 'Photo could not be deleted. Please try again.'));
     }
   }
 
@@ -329,7 +337,7 @@ export default function ProfileForm() {
 
       if (keys.length === 0) {
         setImportMsg(
-          "File padh li, lekin usme koi jaani-pehchani field nahi mili. Neeche form manually bhar sakte ho."
+          "We read your file, but couldn't find any recognizable fields in it. You can fill the form manually below."
         );
       } else {
         setForm((f) => ({
@@ -347,7 +355,7 @@ export default function ProfileForm() {
       setError(
         extractErrorMessage(
           err,
-          'File se data extract nahi ho paya. Please try a different file (PDF, Word, Excel or CSV) or fill the form manually.'
+          'Could not extract data from the file. Please try a different file (PDF, Word, Excel or CSV) or fill the form manually.'
         )
       );
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -439,17 +447,21 @@ export default function ProfileForm() {
           <h2>Personal Details</h2>
           <div className="form-row">
             <div className="field-group">
-              <label htmlFor="height">Height (cm)</label>
-              <input
+              <label htmlFor="height">Height</label>
+              <select
                 id="height"
                 name="height"
-                type="number"
-                min="100"
-                max="250"
                 value={form.height}
                 onChange={handleChange}
                 aria-invalid={Boolean(fieldErrors.height)}
-              />
+              >
+                <option value="">Select</option>
+                {HEIGHT_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
               {fieldErrors.height && <span className="field-error">{fieldErrors.height}</span>}
             </div>
             <div className="field-group">
@@ -467,7 +479,14 @@ export default function ProfileForm() {
           <div className="form-row">
             <div className="field-group">
               <label htmlFor="motherTongue">Mother tongue</label>
-              <input id="motherTongue" name="motherTongue" value={form.motherTongue} onChange={handleChange} />
+              <select id="motherTongue" name="motherTongue" value={form.motherTongue} onChange={handleChange}>
+                <option value="">Select</option>
+                {MOTHER_TONGUE_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -484,11 +503,25 @@ export default function ProfileForm() {
           <div className="form-row">
             <div className="field-group">
               <label htmlFor="religion">Religion</label>
-              <input id="religion" name="religion" value={form.religion} onChange={handleChange} />
+              <select id="religion" name="religion" value={form.religion} onChange={handleChange}>
+                <option value="">Select</option>
+                {RELIGION_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="field-group">
               <label htmlFor="caste">Caste</label>
-              <input id="caste" name="caste" value={form.caste} onChange={handleChange} />
+              <select id="caste" name="caste" value={form.caste} onChange={handleChange}>
+                <option value="">Select</option>
+                {CASTE_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
           <div className="form-row">
@@ -505,25 +538,44 @@ export default function ProfileForm() {
           <div className="form-row">
             <div className="field-group">
               <label htmlFor="education">Education</label>
-              <input id="education" name="education" value={form.education} onChange={handleChange} />
+              <select id="education" name="education" value={form.education} onChange={handleChange}>
+                <option value="">Select</option>
+                {EDUCATION_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="field-group">
               <label htmlFor="occupation">Occupation</label>
-              <input id="occupation" name="occupation" value={form.occupation} onChange={handleChange} />
+              <select id="occupation" name="occupation" value={form.occupation} onChange={handleChange}>
+                <option value="">Select</option>
+                {OCCUPATION_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
           <div className="form-row">
             <div className="field-group">
               <label htmlFor="annualIncome">Annual income</label>
-              <input
+              <select
                 id="annualIncome"
                 name="annualIncome"
-                type="number"
-                min="0"
                 value={form.annualIncome}
                 onChange={handleChange}
                 aria-invalid={Boolean(fieldErrors.annualIncome)}
-              />
+              >
+                <option value="">Select</option>
+                {INCOME_AMOUNT_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
               {fieldErrors.annualIncome && <span className="field-error">{fieldErrors.annualIncome}</span>}
             </div>
           </div>
@@ -539,7 +591,14 @@ export default function ProfileForm() {
             </div>
             <div className="field-group">
               <label htmlFor="state">State</label>
-              <input id="state" name="state" value={form.state} onChange={handleChange} />
+              <select id="state" name="state" value={form.state} onChange={handleChange}>
+                <option value="">Select</option>
+                {STATE_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
           <div className="form-row">

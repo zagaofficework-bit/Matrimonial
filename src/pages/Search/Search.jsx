@@ -137,7 +137,7 @@ export default function Search() {
           setPagination(data.pagination);
         }
       } catch (err) {
-        if (isMounted) setError(err.response?.data?.message || 'Search results load nahi ho paye.');
+        if (isMounted) setError(err.response?.data?.message || 'Unable to load search results. Please try again.');
       } finally {
         if (isMounted) setLoading(false);
       }

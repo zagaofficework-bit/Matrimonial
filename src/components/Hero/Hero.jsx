@@ -39,7 +39,7 @@ export default function Hero() {
         <div className="hero-media">
           <div className="hero-photo">
             <img
-              src="https://images.unsplash.com/photo-1519741497674-611481863552?w=700&q=80"
+              src="/hero.jpg"
               alt="A couple celebrating their wedding"
             />
           </div>

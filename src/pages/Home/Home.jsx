@@ -24,7 +24,7 @@ export default function Home() {
   useEffect(() => {
     getSavedProfileIds()
       .then(setSavedIds)
-      .catch(() => {}); // Silent fail - bookmark state sirf cosmetic hai
+      .catch(() => {}); // Silent fail - bookmark state is purely cosmetic
   }, []);
 
   useEffect(() => {
@@ -38,7 +38,7 @@ export default function Home() {
         }
       })
       .catch(() => {
-        // 404 - preferences abhi set nahi ki hain. Home un-filtered rehta hai.
+        // 404 - preferences haven't been set yet. Home stays un-filtered.
         if (isMounted) setHasPreference(false);
       });
 
@@ -55,7 +55,7 @@ export default function Home() {
         const data = await browseProfiles();
         if (isMounted) setProfiles(data);
       } catch (err) {
-        if (isMounted) setError(err.response?.data?.message || 'Profiles load nahi ho payi.');
+        if (isMounted) setError(err.response?.data?.message || 'Could not load profiles.');
       } finally {
         if (isMounted) setLoading(false);
       }
@@ -67,10 +67,10 @@ export default function Home() {
     };
   }, []);
 
-  // Preference set hai to sirf >= 60% (ya strictFilter ON hone par 100%)
-  // match wali profiles dikhao, best match sabse upar. Preference abhi tak
-  // set nahi hai to purana behaviour (sab profiles, jaisi order backend se
-  // aayi) waisa hi rehta hai.
+  // If preferences are set, only show profiles that match >= 60% (or 100%
+  // if strictFilter is ON), best match first. If preferences haven't been
+  // set yet, keep the old behaviour (all profiles, in the order the
+  // backend returned them).
   const visibleProfiles = preference
     ? profiles
         .filter((profile) => meetsPreference(profile, preference, MATCH_THRESHOLD))
@@ -93,19 +93,15 @@ export default function Home() {
                 : 'Explore members and find your match'}
             </p>
           </div>
-          <button type="button" className="btn btn-outline home-view-more-btn" onClick={() => navigate('/search')}>
-            View More
-          </button>
-        </div>
-
-        {!loading && hasPreference === false && (
-          <div className="home-pref-banner">
-            <span>Set your partner preferences to see a match % on every profile.</span>
-            <button type="button" className="btn btn-primary btn-sm" onClick={() => navigate('/preferences')}>
-              Set Preferences
+          <div className="home-header-actions">
+            <button type="button" className="btn btn-outline home-view-more-btn" onClick={() => navigate('/preferences')}>
+              {hasPreference ? 'Edit Preferences' : 'Set Preferences'}
+            </button>
+            <button type="button" className="btn btn-outline home-view-more-btn" onClick={() => navigate('/search')}>
+              View More
             </button>
           </div>
-        )}
+        </div>
 
         {loading && <p className="state-message">Loading profiles...</p>}
         {!loading && error && <p className="state-message">{error}</p>}
