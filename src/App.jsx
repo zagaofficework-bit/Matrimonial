@@ -25,8 +25,7 @@ import SuccessStoriesList from "./pages/SuccessStories/SuccessStoriesList";
 import SuccessStoryDetail from "./pages/SuccessStories/SuccessStoryDetail";
 import AddSuccessStory from "./pages/SuccessStories/AddSuccessStory";
 
-// Privacy Policy
-import PrivacyPolicy from "./pages/PrivacyPolicy/PrivacyPolicy";
+import Privacypolicy from "./pages/PrivacyPolicy/Privacypolicy";
 
 // Admin panel pages
 import AdminDashboard from "./pages/admin/AdminDashboard/Dashboard";
@@ -73,11 +72,9 @@ function App() {
           element={<ResetPassword />}
         />
 
-        {/* Privacy Policy */}
-        <Route
-          path="/privacy-policy"
-          element={<PrivacyPolicy />}
-        />
+
+        <Route path="/privacy-policy" element={<Privacypolicy />} />
+       
 
         {/* ==================== Protected Routes ==================== */}
 
