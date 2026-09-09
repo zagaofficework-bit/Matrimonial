@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import './Privacypolicy.css';
+import './PrivacyPolicy.css';
 
 const LAST_UPDATED = 'September 2026';
 const SUPPORT_EMAIL = 'support@vivahsetu.com';
