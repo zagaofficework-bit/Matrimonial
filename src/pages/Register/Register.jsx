@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
+import { auth } from '../../firebase';
 import { useAuth } from '../../context/AuthContext';
 import AuthSidePanel from '../../components/AuthSidePanel/AuthSidePanel';
 import '../Login/Login.css';
@@ -16,8 +18,6 @@ const initialForm = {
   city: ''
 };
 
-// Validation rules for each field.
-// Returns a readable error message if invalid, otherwise null.
 function validateField(name, value, form) {
   switch (name) {
     case 'name':
@@ -123,6 +123,14 @@ export default function Register() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // --- Phone OTP verification state ---
+  const [otpStep, setOtpStep] = useState('idle'); // idle | sent | verified
+  const [otp, setOtp] = useState('');
+  const [otpError, setOtpError] = useState('');
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [confirmationResult, setConfirmationResult] = useState(null);
+  const [firebaseIdToken, setFirebaseIdToken] = useState('');
+
   function handleChange(e) {
     const { name, value } = e.target;
 
@@ -131,7 +139,14 @@ export default function Register() {
       [name]: value
     }));
 
-    // Clear or update the field error as the user types.
+    // Phone badalne pe purani verification invalid ho jaati hai
+    if (name === 'phone' && otpStep !== 'idle') {
+      setOtpStep('idle');
+      setOtp('');
+      setFirebaseIdToken('');
+      setConfirmationResult(null);
+    }
+
     setFieldErrors((prev) => {
       const message = validateField(name, value, {
         ...form,
@@ -150,12 +165,68 @@ export default function Register() {
     });
   }
 
+  async function handleSendOtp() {
+    setOtpError('');
+
+    const phoneError = validateField('phone', form.phone, form);
+    if (phoneError) {
+      setFieldErrors((prev) => ({ ...prev, phone: phoneError }));
+      return;
+    }
+
+    setOtpLoading(true);
+    try {
+      if (window.recaptchaVerifier) {
+        window.recaptchaVerifier.clear();
+        document.getElementById('recaptcha-container').innerHTML = '';
+      }
+
+      window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+        size: 'invisible'
+      });
+
+      const result = await signInWithPhoneNumber(
+        auth,
+        `+91${form.phone.trim()}`,
+        window.recaptchaVerifier
+      );
+
+      setConfirmationResult(result);
+      setOtpStep('sent');
+    } catch (err) {
+      setOtpError(err.message || 'Could not send OTP. Please try again.');
+    } finally {
+      setOtpLoading(false);
+    }
+  }
+
+  async function handleVerifyOtp() {
+    setOtpError('');
+
+    if (!otp.trim()) {
+      setOtpError('Please enter the OTP.');
+      return;
+    }
+
+    setOtpLoading(true);
+    try {
+      const credential = await confirmationResult.confirm(otp.trim());
+      const token = await credential.user.getIdToken();
+
+      setFirebaseIdToken(token);
+      setOtpStep('verified');
+    } catch (err) {
+      setOtpError('Invalid or expired OTP. Please try again.');
+    } finally {
+      setOtpLoading(false);
+    }
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
     setError('');
 
     const errors = validateForm(form);
-
     setFieldErrors(errors);
 
     if (Object.keys(errors).length > 0) {
@@ -163,10 +234,15 @@ export default function Register() {
       return;
     }
 
+    if (otpStep !== 'verified' || !firebaseIdToken) {
+      setError('Please verify your phone number with OTP before registering.');
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const payload = { ...form };
+      const payload = { ...form, firebaseIdToken };
 
       if (!payload.email) {
         delete payload.email;
@@ -179,7 +255,7 @@ export default function Register() {
       await register(payload);
 
       navigate('/profile/create');
-    } catch (err) { 
+    } catch (err) {
       setError(
         err.response?.data?.message ||
           'Registration failed. Please try again.'
@@ -315,21 +391,65 @@ export default function Register() {
               <div className="field-group">
                 <label htmlFor="phone">Phone</label>
 
-                <input
-                  id="phone"
-                  name="phone"
-                  value={form.phone}
-                  onChange={handleChange}
-                  placeholder="9876543210"
-                  aria-invalid={Boolean(fieldErrors.phone)}
-                  required
-                />
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <input
+                    id="phone"
+                    name="phone"
+                    value={form.phone}
+                    onChange={handleChange}
+                    placeholder="9876543210"
+                    aria-invalid={Boolean(fieldErrors.phone)}
+                    disabled={otpStep === 'verified'}
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="btn"
+                    onClick={handleSendOtp}
+                    disabled={otpLoading || otpStep === 'verified'}
+                  >
+                    {otpStep === 'verified'
+                      ? 'Verified ✓'
+                      : otpStep === 'sent'
+                      ? 'Resend'
+                      : 'Send OTP'}
+                  </button>
+                </div>
 
                 {fieldErrors.phone && (
                   <span className="field-error">
                     {fieldErrors.phone}
                   </span>
                 )}
+
+                {/* Firebase reCAPTCHA yahan invisible render hoga */}
+                <div id="recaptcha-container"></div>
+
+                {otpStep === 'sent' && (
+                  <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                    <input
+                      placeholder="Enter 6-digit OTP"
+                      value={otp}
+                      onChange={(e) => setOtp(e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      className="btn"
+                      onClick={handleVerifyOtp}
+                      disabled={otpLoading}
+                    >
+                      {otpLoading ? 'Verifying...' : 'Verify'}
+                    </button>
+                  </div>
+                )}
+
+                {otpStep === 'verified' && (
+                  <span style={{ color: 'green', fontSize: '12px' }}>
+                    Phone number verified.
+                  </span>
+                )}
+
+                {otpError && <span className="field-error">{otpError}</span>}
               </div>
 
               <div className="field-group">
@@ -393,7 +513,7 @@ export default function Register() {
             <button
               type="submit"
               className="btn btn-primary btn-block"
-              disabled={loading}
+              disabled={loading || otpStep !== 'verified'}
             >
               {loading ? 'Creating account...' : 'Register'}
             </button>
