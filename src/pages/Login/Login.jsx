@@ -62,4 +62,70 @@ export default function Login() {
     }
   }
 
-  // ... baaki poora JSX waisa hi rehne do
+  return (
+    <div className="auth-screen">
+      <AuthSidePanel />
+
+      <div className="auth-form-side">
+        <div className="auth-card">
+          <span className="auth-card-eyebrow">Welcome Back</span>
+          <h1 className="auth-card-title">Login to your account</h1>
+          <p className="auth-subtitle">Enter your details to continue.</p>
+
+          {error && <div className="field-error">{error}</div>}
+
+          <form onSubmit={handleSubmit} noValidate>
+            <div className="field-group">
+              <label htmlFor="identifier">Phone or Email</label>
+              <input
+                id="identifier"
+                name="identifier"
+                type="text"
+                value={form.identifier}
+                onChange={handleChange}
+                placeholder="Enter phone number or email"
+                autoComplete="username"
+                aria-invalid={Boolean(fieldErrors.identifier)}
+              />
+              {fieldErrors.identifier && (
+                <span className="field-error">{fieldErrors.identifier}</span>
+              )}
+            </div>
+
+            <div className="field-group">
+              <div className="field-label-row">
+                <label htmlFor="password">Password</label>
+                <Link to="/forgot-password" className="forgot-password-link">
+                  Forgot password?
+                </Link>
+              </div>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                value={form.password}
+                onChange={handleChange}
+                placeholder="Enter your password"
+                autoComplete="current-password"
+                aria-invalid={Boolean(fieldErrors.password)}
+              />
+              {fieldErrors.password && (
+                <span className="field-error">{fieldErrors.password}</span>
+              )}
+            </div>
+
+            <button type="submit" className="btn-block" disabled={loading}>
+              {loading ? 'Logging in...' : 'Login'}
+            </button>
+          </form>
+
+          <div className="auth-divider">or</div>
+
+          <p className="auth-footer">
+            Don't have an account? <Link to="/register">Register</Link>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
