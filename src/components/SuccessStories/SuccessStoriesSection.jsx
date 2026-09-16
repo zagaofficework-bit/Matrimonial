@@ -1,102 +1,47 @@
 import { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { getStoryById } from '../../api/successStory.api';
+import { Link } from 'react-router-dom';
+import StoryCard from './StoryCard';
+import { getFeaturedStories } from '../../api/successStory.api';
 import './SuccessStoriesSection.css';
 
-function formatDate(dateStr) {
-  if (!dateStr) return '';
-
-  return new Date(dateStr).toLocaleDateString('en-IN', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
-}
-
-export default function SuccessStoryDetail() {
-  const { id } = useParams();
-
-  const [story, setStory] = useState(null);
+export default function SuccessStoriesSection() {
+  const [stories, setStories] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
 
   useEffect(() => {
     let isMounted = true;
 
     async function load() {
-      setLoading(true);
-      setError('');
-
       try {
-        const data = await getStoryById(id);
-
-        if (isMounted) {
-          setStory(data);
-        }
-      } catch (err) {
-        if (isMounted) {
-          setError(
-            err.response?.data?.message || 'This story was not found.'
-          );
-        }
+        const data = await getFeaturedStories();
+        if (isMounted) setStories(data || []);
+      } catch {
+        // Silent fail - Home page pe ye sirf ek preview section hai
       } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
+        if (isMounted) setLoading(false);
       }
     }
 
     load();
-
     return () => {
       isMounted = false;
     };
-  }, [id]);
+  }, []);
 
-  if (loading) {
-    return <p className="state-message">Loading story...</p>;
-  }
-
-  if (error || !story) {
-    return (
-      <p className="state-message">
-        {error || 'Story not found.'}
-      </p>
-    );
-  }
+  if (loading || stories.length === 0) return null;
 
   return (
-    <div className="page-container story-detail-page">
-      <Link to="/success-stories" className="story-detail-back">
-        ‹ Back to Success Stories
-      </Link>
-
-      <div className="story-detail-card">
-        <img
-          src={story.image}
-          alt={story.coupleNames}
-          className="story-detail-image"
-        />
-
-        <div className="story-detail-body">
-          <h1 className="story-detail-names">
-            {story.coupleNames}
-          </h1>
-
-          {story.partnerUserId?.name && (
-            <span className="story-detail-tag">
-              Tagged: {story.partnerUserId.name}
-            </span>
-          )}
-
-          <p className="story-detail-date">
-            {formatDate(story.storyDate)}
-          </p>
-
-          <p className="story-detail-text">
-            {story.story}
-          </p>
-        </div>
+    <div className="page-container success-stories-section">
+      <div className="home-header">
+        <h2>Success Stories</h2>
+        <Link to="/success-stories" className="btn btn-outline btn-sm">
+          View All
+        </Link>
+      </div>
+      <div className="stories-grid">
+        {stories.slice(0, 3).map((story) => (
+          <StoryCard key={story._id} story={story} />
+        ))}
       </div>
     </div>
   );

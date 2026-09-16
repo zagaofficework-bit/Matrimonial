@@ -178,8 +178,8 @@ export default function Register() {
 
       await register(payload);
 
-      navigate('/');
-    } catch (err) {
+      navigate('/profile/create');
+    } catch (err) { 
       setError(
         err.response?.data?.message ||
           'Registration failed. Please try again.'

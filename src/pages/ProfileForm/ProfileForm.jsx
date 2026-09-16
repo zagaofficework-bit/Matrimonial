@@ -9,13 +9,14 @@ import {
 } from '../../api/profile.api';
 import { notifyProfileUpdated } from '../../hooks/useMyProfileStatus';
 import { RELIGION_OPTIONS } from '../../utils/Religionoptions';
-import { CASTE_OPTIONS } from '../../utils/Casteoptions';
+import { getCasteOptions } from '../../utils/Casteoptions';
 import { EDUCATION_OPTIONS } from '../../utils/Educationoptions';
 import { OCCUPATION_OPTIONS } from '../../utils/Occupationoptions';
 import { STATE_OPTIONS } from '../../utils/Stateoptions';
 import { HEIGHT_OPTIONS } from '../../utils/Heightoptions';
 import { INCOME_AMOUNT_OPTIONS } from '../../utils/Incomeoptions';
 import { MOTHER_TONGUE_OPTIONS } from '../../utils/MotherTongueoptions';
+import { getDistrictOptions } from '../../utils/Districtoptions';
 import './ProfileForm.css';
 
 // Backend se aane wale error ke alag-alag shapes ko ek readable
@@ -49,6 +50,7 @@ const FIELD_LABELS = {
   occupation: 'Occupation',
   annualIncome: 'Annual income',
   city: 'City',
+  district: 'District',
   state: 'State',
   bio: 'About you'
 };
@@ -68,6 +70,7 @@ const initialForm = {
   annualIncome: '',
 
   city: '',
+  district: '',
   state: '',
   country: 'India',
 
@@ -151,6 +154,7 @@ export default function ProfileForm() {
           occupation: profile.occupation ?? '',
           annualIncome: profile.annualIncome ?? '',
           city: profile.city ?? '',
+          district: profile.district ?? '',
           state: profile.state ?? '',
           country: profile.country ?? 'India',
           familyDetails: {
@@ -503,7 +507,16 @@ export default function ProfileForm() {
           <div className="form-row">
             <div className="field-group">
               <label htmlFor="religion">Religion</label>
-              <select id="religion" name="religion" value={form.religion} onChange={handleChange}>
+              <select
+                id="religion"
+                name="religion"
+                value={form.religion}
+                onChange={(e) => {
+                  handleChange(e);
+                  // Religion badalte hi purani (galat religion ki) caste clear kar do
+                  setForm((f) => ({ ...f, caste: '' }));
+                }}
+              >
                 <option value="">Select</option>
                 {RELIGION_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>
@@ -514,9 +527,9 @@ export default function ProfileForm() {
             </div>
             <div className="field-group">
               <label htmlFor="caste">Caste</label>
-              <select id="caste" name="caste" value={form.caste} onChange={handleChange}>
-                <option value="">Select</option>
-                {CASTE_OPTIONS.map((opt) => (
+              <select id="caste" name="caste" value={form.caste} onChange={handleChange} disabled={!form.religion}>
+                <option value="">{form.religion ? 'Select' : 'Select religion first'}</option>
+                {getCasteOptions(form.religion).map((opt) => (
                   <option key={opt.value} value={opt.value}>
                     {opt.label}
                   </option>
@@ -588,6 +601,17 @@ export default function ProfileForm() {
             <div className="field-group">
               <label htmlFor="city">City</label>
               <input id="city" name="city" value={form.city} onChange={handleChange} />
+            </div>
+            <div className="field-group">
+              <label htmlFor="district">District</label>
+              <select id="district" name="district" value={form.district} onChange={handleChange}>
+                <option value="">Select</option>
+                {getDistrictOptions(form.state).map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="field-group">
               <label htmlFor="state">State</label>
