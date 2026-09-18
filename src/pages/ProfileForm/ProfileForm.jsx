@@ -14,14 +14,14 @@ import { EDUCATION_OPTIONS } from '../../utils/Educationoptions';
 import { OCCUPATION_OPTIONS } from '../../utils/Occupationoptions';
 import { STATE_OPTIONS } from '../../utils/Stateoptions';
 import { HEIGHT_OPTIONS } from '../../utils/Heightoptions';
-import { INCOME_AMOUNT_OPTIONS } from '../../utils/Incomeoptions';
+import { INCOME_AMOUNT_OPTIONS, bracketToRupees, rupeesToBracket } from '../../utils/Incomeoptions';
 import { MOTHER_TONGUE_OPTIONS } from '../../utils/MotherTongueoptions';
 import { getDistrictOptions } from '../../utils/Districtoptions';
 import './ProfileForm.css';
 
-// Backend se aane wale error ke alag-alag shapes ko ek readable
-// message me convert karta hai, taaki user ko exactly pata chale
-// ki kya galat hua (sirf generic "kuch gadbad hai" nahi).
+// Converts backend errors of various shapes into one readable message,
+// so the user knows exactly what went wrong (not just a generic
+// "something went wrong").
 function extractErrorMessage(err, fallback) {
   const data = err?.response?.data;
   if (!data) return err?.message || fallback;
@@ -38,8 +38,8 @@ function extractErrorMessage(err, fallback) {
   return fallback;
 }
 
-// Extracted field ka backend "key" -> form me dikhne wala readable naam.
-// Sirf UI message ke liye use hota hai ("Height, Occupation filled...").
+// Maps a backend field "key" -> the readable label shown in the form.
+// Used only for the UI message ("Height, Occupation filled...").
 const FIELD_LABELS = {
   height: 'Height',
   maritalStatus: 'Marital status',
@@ -102,19 +102,21 @@ const initialForm = {
   }
 };
 
-// Number-type fields ke liye range validation - inhe blank chhodna allowed
-// hai (optional fields), lekin agar value bhari hai to range ke andar honi
-// chahiye.
+// Range validation for number-type fields - leaving them blank is
+// allowed (optional fields), but if a value is filled in it must be
+// within range.
 function validateNumberField(name, value) {
   if (value === '' || value === null || value === undefined) return null;
+
+  // annualIncome is now a bracket string ("3-5", "100+") - it comes
+  // from a dropdown, so it's already valid. No need to check with Number().
+  if (name === 'annualIncome') return null;
+
   const num = Number(value);
   if (Number.isNaN(num)) return 'Please enter a valid number.';
 
   if (name === 'height') {
     if (num < 100 || num > 250) return 'Height must be between 100 and 250 cm.';
-  }
-  if (name === 'annualIncome') {
-    if (num < 0) return 'Annual income cannot be negative.';
   }
   if (name === 'siblings') {
     if (num < 0 || num > 20) return 'Number of siblings must be between 0 and 20.';
@@ -152,7 +154,7 @@ export default function ProfileForm() {
           subCaste: profile.subCaste ?? '',
           education: profile.education ?? '',
           occupation: profile.occupation ?? '',
-          annualIncome: profile.annualIncome ?? '',
+          annualIncome: rupeesToBracket(profile.annualIncome),
           city: profile.city ?? '',
           district: profile.district ?? '',
           state: profile.state ?? '',
@@ -183,7 +185,7 @@ export default function ProfileForm() {
         });
         setPhotos(profile.photos || []);
       } catch {
-        // Profile abhi tak bani nahi - naya form hi rehne do, koi error nahi dikhana
+        // Profile doesn't exist yet - keep the new/blank form, don't show an error
       } finally {
         setLoading(false);
       }
@@ -217,8 +219,8 @@ export default function ProfileForm() {
   }
 
   // Joi optional string fields reject "" outright (except bio, which allows it),
-  // aur enum fields (maritalStatus, familyType, etc.) bhi "" ko valid value nahi maante.
-  // Isliye blank fields ko payload me bhejne se pehle hi hata dete hain.
+  // and enum fields (maritalStatus, familyType, etc.) also don't treat "" as
+  // a valid value. So we strip blank fields from the payload before sending it.
   function stripEmptyStrings(obj) {
     const cleaned = {};
     Object.entries(obj).forEach(([key, value]) => {
@@ -231,6 +233,26 @@ export default function ProfileForm() {
       cleaned[key] = value;
     });
     return cleaned;
+  }
+
+  function buildProfilePayload() {
+    const interestsArray = form.interests
+      .split(',')
+      .map((tag) => tag.trim())
+      .filter(Boolean);
+
+    const payload = stripEmptyStrings({
+      ...form,
+      height: form.height === '' ? undefined : Number(form.height),
+      annualIncome: form.annualIncome === '' ? undefined : bracketToRupees(form.annualIncome, 'min'),
+      familyDetails: {
+        ...form.familyDetails,
+        siblings: Number(form.familyDetails.siblings) || 0
+      },
+      interests: interestsArray
+    });
+    if (interestsArray.length === 0) delete payload.interests;
+    return payload;
   }
 
   async function handleSubmit(e) {
@@ -257,22 +279,7 @@ export default function ProfileForm() {
 
     setSaving(true);
     try {
-      const interestsArray = form.interests
-        .split(',')
-        .map((tag) => tag.trim())
-        .filter(Boolean);
-
-      const payload = stripEmptyStrings({
-        ...form,
-        height: form.height === '' ? undefined : Number(form.height),
-        annualIncome: form.annualIncome === '' ? undefined : Number(form.annualIncome),
-        familyDetails: {
-          ...form.familyDetails,
-          siblings: Number(form.familyDetails.siblings) || 0
-        },
-        interests: interestsArray
-      });
-      if (interestsArray.length === 0) delete payload.interests;
+      const payload = buildProfilePayload();
       await saveMyProfile(payload);
 
       setSuccessMsg(
@@ -282,13 +289,13 @@ export default function ProfileForm() {
       );
       setIsExistingProfile(true);
 
-      // Navbar ko batao ki profile ban chuki hai, taaki wo turant
-      // "My Profile" dikhaye (page reload ki zaroorat na pade).
+      // Let the navbar know the profile has been created, so it can show
+      // "My Profile" right away (no page reload needed).
       notifyProfileUpdated();
       window.scrollTo({ top: 0, behavior: 'smooth' });
 
-      // Pehli baar profile bani hai - ab partner preferences set karwao,
-      // taaki homepage par match % turant kaam karne lage.
+      // The profile was just created for the first time - now have the user
+      // set partner preferences, so the homepage match % works right away.
       if (wasNewProfile) {
         setTimeout(() => navigate('/preferences?from=profile-create'), 1200);
       }
@@ -300,12 +307,35 @@ export default function ProfileForm() {
     }
   }
 
+  // Photo upload is saved inside the Profile document on the backend -
+  // so if the profile doesn't exist yet (the user has only filled the
+  // form but not clicked "Save"), we automatically create a lightweight
+  // "stub" profile first (from whatever is filled in the form so far)
+  // before adding the photo. This makes "Add photo" work immediately,
+  // whether or not the rest of the form is complete.
+  async function ensureProfileExists() {
+    if (isExistingProfile) return true;
+    try {
+      const payload = buildProfilePayload();
+      await saveMyProfile(payload);
+      setIsExistingProfile(true);
+      notifyProfileUpdated();
+      return true;
+    } catch (err) {
+      setError(extractErrorMessage(err, 'Could not save your profile automatically. Please fill the required fields and click Save first.'));
+      return false;
+    }
+  }
+
   async function handlePhotoChange(e) {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
     setError('');
     try {
+      const profileReady = await ensureProfileExists();
+      if (!profileReady) return;
+
       const updatedProfile = await uploadProfilePhoto(file);
       setPhotos(updatedProfile.photos || []);
     } catch (err) {
@@ -325,10 +355,10 @@ export default function ProfileForm() {
     }
   }
 
-  // "Upload a file, auto-fill the form" flow. File PDF/Word/Excel/CSV
-  // ho sakti hai - backend usme se jaani-pehchani fields nikalta hai,
-  // hum unhe form me bhar dete hain. Kuch save nahi hota yahan - user
-  // pehle sab check karega, phir normal "Save Profile" se submit karega.
+  // "Upload a file, auto-fill the form" flow. The file can be a
+  // PDF/Word/Excel/CSV - the backend extracts known fields from it,
+  // and we fill them into the form. Nothing is saved here - the user
+  // will review everything first, then submit via the normal "Save Profile".
   async function handleImportFile(e) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -348,7 +378,7 @@ export default function ProfileForm() {
           ...f,
           ...extracted,
           height: extracted.height !== undefined ? String(extracted.height) : f.height,
-          annualIncome: extracted.annualIncome !== undefined ? String(extracted.annualIncome) : f.annualIncome
+          annualIncome: extracted.annualIncome !== undefined ? rupeesToBracket(extracted.annualIncome) : f.annualIncome
         }));
 
         const filledLabels = keys.map((key) => FIELD_LABELS[key] || key).join(', ');
@@ -513,7 +543,7 @@ export default function ProfileForm() {
                 value={form.religion}
                 onChange={(e) => {
                   handleChange(e);
-                  // Religion badalte hi purani (galat religion ki) caste clear kar do
+                  // When religion changes, clear the previously selected (now invalid) caste
                   setForm((f) => ({ ...f, caste: '' }));
                 }}
               >
@@ -599,19 +629,8 @@ export default function ProfileForm() {
           <h2>Location</h2>
           <div className="form-row">
             <div className="field-group">
-              <label htmlFor="city">City</label>
-              <input id="city" name="city" value={form.city} onChange={handleChange} />
-            </div>
-            <div className="field-group">
-              <label htmlFor="district">District</label>
-              <select id="district" name="district" value={form.district} onChange={handleChange}>
-                <option value="">Select</option>
-                {getDistrictOptions(form.state).map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
+              <label htmlFor="country">Country</label>
+              <input id="country" name="country" value={form.country} onChange={handleChange} />
             </div>
             <div className="field-group">
               <label htmlFor="state">State</label>
@@ -627,8 +646,19 @@ export default function ProfileForm() {
           </div>
           <div className="form-row">
             <div className="field-group">
-              <label htmlFor="country">Country</label>
-              <input id="country" name="country" value={form.country} onChange={handleChange} />
+              <label htmlFor="district">District</label>
+              <select id="district" name="district" value={form.district} onChange={handleChange}>
+                <option value="">Select</option>
+                {getDistrictOptions(form.state).map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="field-group">
+              <label htmlFor="city">City</label>
+              <input id="city" name="city" value={form.city} onChange={handleChange} />
             </div>
           </div>
         </section>
