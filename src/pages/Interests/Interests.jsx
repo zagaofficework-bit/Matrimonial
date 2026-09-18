@@ -20,6 +20,7 @@ function InterestRow({ item, showActions, onAccept, onDecline, actionLoading, na
     item.profile?.photos?.find((p) => p.isPrimary)?.url || item.profile?.photos?.[0]?.url || null;
   const name = item.user?.name || 'Member';
   const age = calculateAge(item.user?.dob);
+  const isBusy = actionLoading === item._id;
 
   function goToProfile() {
     if (item.profile?._id) navigate(`/profile/${item.profile._id}`);
@@ -47,17 +48,17 @@ function InterestRow({ item, showActions, onAccept, onDecline, actionLoading, na
             type="button"
             className="btn btn-primary btn-sm"
             onClick={() => onAccept(item._id)}
-            disabled={actionLoading === item._id}
+            disabled={isBusy}
           >
-            Accept
+            {isBusy ? 'Accepting...' : 'Accept'}
           </button>
           <button
             type="button"
             className="btn btn-outline btn-sm"
             onClick={() => onDecline(item._id)}
-            disabled={actionLoading === item._id}
+            disabled={isBusy}
           >
-            Decline
+            {isBusy ? 'Declining...' : 'Decline'}
           </button>
         </div>
       ) : (
@@ -86,7 +87,7 @@ export default function Interests() {
       setReceived(receivedData);
       setSent(sentData);
     } catch (err) {
-      setError(err.response?.data?.message || 'Interests load nahi ho paye.');
+      setError(err.response?.data?.message || 'Could not load interests.');
     } finally {
       setLoading(false);
     }
@@ -97,24 +98,41 @@ export default function Interests() {
   }, [loadAll]);
 
   async function handleAccept(interestId) {
+    // Guard against double-clicks: if any action is already in flight,
+    // ignore this click instead of firing a duplicate request.
+    if (actionLoading) return;
+
     setActionLoading(interestId);
     try {
       await respondToInterest(interestId, 'accept');
       setReceived((prev) => prev.filter((item) => item._id !== interestId));
-    } catch {
-      // ignore - user can retry
+    } catch (err) {
+      // Backend says this interest was already processed (e.g. from a
+      // duplicate click) - it's already accepted on the server, so just
+      // remove it from the list instead of showing an error.
+      if (err.response?.data?.error?.code === 'INVALID_STATUS') {
+        setReceived((prev) => prev.filter((item) => item._id !== interestId));
+      } else {
+        setError(err.response?.data?.message || 'Could not accept. Please try again.');
+      }
     } finally {
       setActionLoading(null);
     }
   }
 
   async function handleDecline(interestId) {
+    if (actionLoading) return;
+
     setActionLoading(interestId);
     try {
       await respondToInterest(interestId, 'reject');
       setReceived((prev) => prev.filter((item) => item._id !== interestId));
-    } catch {
-      // ignore - user can retry
+    } catch (err) {
+      if (err.response?.data?.error?.code === 'INVALID_STATUS') {
+        setReceived((prev) => prev.filter((item) => item._id !== interestId));
+      } else {
+        setError(err.response?.data?.message || 'Could not decline. Please try again.');
+      }
     } finally {
       setActionLoading(null);
     }
